@@ -39,7 +39,7 @@
 	)
 	(
 		// Users to add ports here
-
+		input wire  tfhe_clk,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -163,7 +163,9 @@
 		input wire  m01_axi_rlast,
 		input wire [C_M01_AXI_RUSER_WIDTH-1 : 0] m01_axi_ruser,
 		input wire  m01_axi_rvalid,
-		output wire  m01_axi_rready
+		output wire  m01_axi_rready,
+		
+		output wire [7:0] user_led
 	);
 // Instantiation of Axi Bus Interface S00_AXI
 	tfhe_w_controller # ( 
@@ -190,7 +192,8 @@
 		.S_AXI_RDATA(s00_axi_rdata),
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
+		.S_AXI_RREADY(s00_axi_rready),
+		.user_led(user_led)
 	);
 
 // Instantiation of Axi Bus Interface M00_AXI
@@ -318,6 +321,77 @@
 	);
 
 	// Add user logic here
+	
+	// tfhe_pbs_accelerator instance
+    tfhe_pbs_accelerator pbs_computing (
+        .i_clk               (tfhe_clk),
+        .i_reset_n           (computing_reset),
+        .i_ram_coeff_idx     (lwe_n_buf_rq_idx),
+        .i_ai_hbm_out        (ai_hbm_out),
+        .i_bsk_hbm_out       (bsk_hbm_out),
+        .i_op_hbm_out        (), //hbm_read_out_pkgs_stack_1[channel_op_idx]
+        .i_lut_hbm_out       (), // hbm_read_out_pkgs_stack_1[channel_lut_idx]
+        .i_b_hbm_out         (), //hbm_read_out_pkgs_stack_1[channel_b_idx]
+        .o_out_valid         (lwe_n_buf_out_valid),
+        .o_return_address    (), // 'open' in VHDL = unconnected in Verilog
+        .o_out_data          (lwe_n_buf_out),
+        .o_next_module_reset (lwe_n_buf_write_next_reset),
+        .o_ai_hbm_in         (ai_hbm_in),
+        .o_bsk_hbm_in        (bsk_hbm_in),
+        .o_op_hbm_in         (), //hbm_read_in_pkgs_stack_1[channel_op_idx]
+        .o_lut_hbm_in        (), //hbm_read_in_pkgs_stack_1[channel_lut_idx]
+        .o_b_hbm_in          () // hbm_read_in_pkgs_stack_1[channel_b_idx]
+    );
+    
+    // Generate block equivalent to: only_pbs: if no_muladd_module generate
+//    generate
+//    if (no_muladd_module) begin : only_pbs
+        pbs_lwe_n_storage_read_to_hbm read_lwe_n_storage (
+            .i_clk           (computing_clk),
+            .i_coeffs        (lwe_n_buf_out),
+            .i_coeffs_valid  (lwe_n_buf_out_valid),
+            .i_reset         (lwe_n_buf_write_next_reset),
+            .i_hbm_write_out (), // hbm_write_out_pkgs_stack_1[channel_result_idx]
+            .o_hbm_write_in  (), // hbm_write_in_pkgs_stack_1[channel_result_idx]
+            .o_ram_coeff_idx (lwe_n_buf_rq_idx)
+        );
+//    end
+//    endgenerate
+
+        hbm_read_pkg_to_m00_adapter u_hbm_read_pkg_to_m00_adapter (
+            // Clock / Reset
+            .i_clk            (i_clk),
+            .i_reset_n        (i_reset_n),
+        
+            // HBM package read input
+            .i_hbm_read_in    (i_hbm_read_in),
+        
+            // HBM package read output
+            .o_hbm_read_out   (o_hbm_read_out),
+        
+            // M00 AXI Read Address Channel
+            .M_AXI_ARID       (M_AXI_ARID),
+            .M_AXI_ARADDR     (M_AXI_ARADDR),
+            .M_AXI_ARLEN      (M_AXI_ARLEN),
+            .M_AXI_ARSIZE     (M_AXI_ARSIZE),
+            .M_AXI_ARBURST    (M_AXI_ARBURST),
+            .M_AXI_ARLOCK     (M_AXI_ARLOCK),
+            .M_AXI_ARCACHE    (M_AXI_ARCACHE),
+            .M_AXI_ARPROT     (M_AXI_ARPROT),
+            .M_AXI_ARQOS      (M_AXI_ARQOS),
+            .M_AXI_ARUSER     (M_AXI_ARUSER),
+            .M_AXI_ARVALID    (M_AXI_ARVALID), // inout in VHDL ? connect as wire
+            .M_AXI_ARREADY    (M_AXI_ARREADY),
+        
+            // M00 AXI Read Data Channel
+            .M_AXI_RID        (M_AXI_RID),
+            .M_AXI_RDATA      (M_AXI_RDATA),
+            .M_AXI_RRESP      (M_AXI_RRESP),
+            .M_AXI_RLAST      (M_AXI_RLAST),
+            .M_AXI_RUSER      (M_AXI_RUSER),
+            .M_AXI_RVALID     (M_AXI_RVALID),
+            .M_AXI_RREADY     (M_AXI_RREADY)
+        );
 
 	// User logic ends
 

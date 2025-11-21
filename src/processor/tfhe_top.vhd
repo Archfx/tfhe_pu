@@ -139,56 +139,11 @@ architecture Behavioral of tfhe_processor is
           );
      end component;
 
-     component axi_crossbar_1_wrapper is
-          generic (
-               num_axi_slaves : integer
-          );
-          port (
-               i_clk           : in  std_ulogic;
-               i_reset_n       : in  std_ulogic;
-               i_write_pkgs    : in  axi_in_write_pkg;                                  -- small pkg from master
-               i_read_pkgs     : in  axi_in_read_pkg;                                   -- small pkg from master
-               i_hbm_read_out  : in  hbm_ps_out_read_pkg_arr(0 to num_axi_slaves - 1);  -- big pkg for master from slaves
-               i_hbm_write_out : in  hbm_ps_out_write_pkg_arr(0 to num_axi_slaves - 1); -- big pkg for master from slaves
-               o_hbm_read_in   : out hbm_ps_in_read_pkg_arr(0 to num_axi_slaves - 1);   -- big pkg for slaves from master
-               o_hbm_write_in  : out hbm_ps_in_write_pkg_arr(0 to num_axi_slaves - 1);  -- big pkg for slaves from master
-               o_write_pkgs    : out axi_out_write_pkg;                                 -- small pkg from one slave for the master
-               o_read_pkgs     : out axi_out_read_pkg                                   -- small pkg from one slave for the master
-          );
-     end component;
+     -- axi_crossbar_1_wrapper removed: external PCIe/XDMA and full crossbar not required
 
-     component xdma_0_wrapper is
-          port (
-               i_sys_clk                : in  std_ulogic; -- should be 250 MHz
-               i_sys_clk_gt         : in  std_ulogic; -- should be riven from the O port of reference clock IBUFDS_GTE3
-               i_reset_n            : in  std_ulogic;
+     -- xdma_0_wrapper removed: external PCIe/XDMA is not used in this simplified build
 
-               axi_master_write_out : in  axi_out_write_pkg;
-               axi_master_read_out  : in  axi_out_read_pkg;
-               axi_master_write_in  : out axi_in_write_pkg;
-               axi_master_read_in   : out axi_in_read_pkg;
-
-               pci_exp_rxp          : in  std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_rxn          : in  std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_txp          : out std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_txn          : out std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-
-               o_axi_clk            : out std_ulogic;
-               o_axi_reset_n        : out std_ulogic
-          );
-     end component;
-
-     component pcie4c_uscale_plus_0_wrapper is
-          port (
-               i_sys_clk    : in  std_ulogic; -- 250 MHz
-               i_sys_clk_gt : in  std_ulogic; --This clock must be driven directly from IBUFDS_GTE (same definition and frequency as sys_clk)
-               i_reset_n    : in  std_ulogic;
-               pci_exp_rxp  : in  std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_rxn  : in  std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_txp  : out std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-               pci_exp_txn  : out std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0)
-          );
-     end component;
+     -- pcie wrapper removed for simplified M00-only HBM access
 
      constant channel_op_idx     : integer := 0;
      constant channel_lut_idx    : integer := 1;
@@ -224,29 +179,15 @@ architecture Behavioral of tfhe_processor is
 
      signal axi_read_out_pkgs_stack_0 : hbm_ps_out_read_pkg_arr(0 to hbm_stack_num_ps_ports - 1); -- v4p ignore w-302. Because its unconnected on purpose
 
-     signal axi_read_out_pkgs_stack_1  : hbm_ps_out_read_pkg_arr(0 to crossbar_1_num_axi_slaves - 1);
-     signal axi_read_in_pkgs_stack_1   : hbm_ps_in_read_pkg_arr(0 to crossbar_1_num_axi_slaves - 1);
-     signal axi_write_out_pkgs_stack_1 : hbm_ps_out_write_pkg_arr(0 to crossbar_1_num_axi_slaves - 1);
-     signal axi_write_in_pkgs_stack_1  : hbm_ps_in_write_pkg_arr(0 to crossbar_1_num_axi_slaves - 1);
-
      signal axi_hbm_0_master_write_in         : axi_in_write_pkg;
      signal axi_hbm_0_master_write_out        : axi_out_write_pkg;
-     signal axi_hbm_0_master_read_in          : axi_in_read_pkg; -- v4p ignore w-302. Because its unconnected on purpose
-     -- signal axi_hbm_0_master_read_out  : axi_out_read_pkg; -- v4p ignore w-302. Because its unconnected on purpose
-     signal axi_all_channels_master_write_in  : axi_in_write_pkg;
-     signal axi_all_channels_master_write_out : axi_out_write_pkg;
-     signal axi_all_channels_master_read_in   : axi_in_read_pkg;
-     signal axi_all_channels_master_read_out  : axi_out_read_pkg;
+     signal axi_hbm_0_master_read_in          : axi_in_read_pkg; -- kept for M00 interface
+     -- signal axi_hbm_0_master_read_out      : axi_out_read_pkg; -- not used in simplified build
 
      signal computing_clk   : std_ulogic;
      signal computing_reset : std_ulogic;
      signal axi_clk         : std_ulogic;
      signal axi_reset_n     : std_ulogic;
-
-     signal xdma_pci_exp_rxp : std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-     signal xdma_pci_exp_rxn : std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-     signal xdma_pci_exp_txp : std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
-     signal xdma_pci_exp_txn : std_logic_vector(pcie_rx_tx_bit_width - 1 downto 0);
 
      constant reset_cnt_val: integer := 8;
      signal reset_clk_cnt: unsigned(0 to get_bit_length(reset_cnt_val-1)-1) := to_unsigned(0,get_bit_length(reset_cnt_val-1));
@@ -368,72 +309,9 @@ begin
                o_read_pkgs     => open -- unconnected on purpose
           );
 
-     axi_for_all_channels: axi_crossbar_1_wrapper
-          generic map (
-               num_axi_slaves => crossbar_1_num_axi_slaves
-          )
-          port map (
-               i_clk           => axi_clk,
-               i_reset_n       => axi_reset_n,
-               i_write_pkgs    => axi_all_channels_master_write_in,  -- from pcie
-               i_read_pkgs     => axi_all_channels_master_read_in,   -- from pcie
-               i_hbm_read_out  => axi_read_out_pkgs_stack_1,
-               i_hbm_write_out => axi_write_out_pkgs_stack_1,
-               o_hbm_read_in   => axi_read_in_pkgs_stack_1,
-               o_hbm_write_in  => axi_write_in_pkgs_stack_1,
-               o_write_pkgs    => axi_all_channels_master_write_out, -- to pcie
-               o_read_pkgs     => axi_all_channels_master_read_out -- to pcie
-          );
-     -- read channel connection
-     axi_read_out_pkgs_stack_1(channel_result_idx) <= hbm_read_out_pkgs_stack_1(channel_result_idx);
-     hbm_read_in_pkgs_stack_1(channel_result_idx)  <= axi_read_in_pkgs_stack_1(channel_result_idx);
-     -- but since write is deactivated drive those signals with 0
-     axi_write_out_pkgs_stack_1(channel_result_idx).awready <= '0';
-     axi_write_out_pkgs_stack_1(channel_result_idx).bid <= (others => '0');
-     axi_write_out_pkgs_stack_1(channel_result_idx).bresp <= (others => '0');
-     axi_write_out_pkgs_stack_1(channel_result_idx).bvalid <= '0';
-     axi_write_out_pkgs_stack_1(channel_result_idx).wready <= '0';
-
-     -- map axi crossbar to hbm stack 1
-     make_channels_active: for channel_idx in 0 to hbm_stack_1_num_write_channels - 1 generate
-          axi_write_out_pkgs_stack_1(channel_idx)             <= hbm_write_out_pkgs_stack_1(channel_idx);
-          hbm_write_in_pkgs_stack_1(channel_idx)              <= axi_write_in_pkgs_stack_1(channel_idx);
-          -- but since read is deactivated drive those signals with 0
-          axi_read_out_pkgs_stack_1(channel_idx).arready      <= '0';
-          axi_read_out_pkgs_stack_1(channel_idx).rvalid       <= '0';
-          axi_read_out_pkgs_stack_1(channel_idx).rdata        <= (others => '0');
-          axi_read_out_pkgs_stack_1(channel_idx).rdata_parity <= (others => '0');
-          axi_read_out_pkgs_stack_1(channel_idx).rid          <= (others => '0');
-          axi_read_out_pkgs_stack_1(channel_idx).rlast        <= '0';
-          axi_read_out_pkgs_stack_1(channel_idx).rresp        <= (others => '0');
-     end generate;
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).arready      <= '0';
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rvalid       <= '0';
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rdata        <= (others => '0');
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rdata_parity <= (others => '0');
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rid          <= (others => '0');
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rlast        <= '0';
-     axi_read_out_pkgs_stack_1(channel_bsk_idx).rresp        <= (others => '0');
-
-     -- deactivate unused channels of hbm stack 1
-     make_channels_inactive_1: for channel_idx in hbm_stack_1_num_used_channels to hbm_stack_num_ps_ports - 1 generate
-          hbm_write_in_pkgs_stack_1(channel_idx).awvalid      <= '0';
-          hbm_write_in_pkgs_stack_1(channel_idx).wvalid       <= '0';
-          hbm_write_in_pkgs_stack_1(channel_idx).bready       <= '0';
-          hbm_write_in_pkgs_stack_1(channel_idx).awaddr       <= (others => '0');
-          hbm_write_in_pkgs_stack_1(channel_idx).awid         <= (others => '0');
-          hbm_write_in_pkgs_stack_1(channel_idx).awlen        <= (others => '0');
-          hbm_write_in_pkgs_stack_1(channel_idx).wdata        <= (others => '0');
-          hbm_write_in_pkgs_stack_1(channel_idx).wdata_parity <= (others => '0');
-          hbm_write_in_pkgs_stack_1(channel_idx).wlast        <= '0';
-
-          hbm_read_in_pkgs_stack_1(channel_idx).arvalid <= '0';
-          hbm_read_in_pkgs_stack_1(channel_idx).rready  <= '0';
-          hbm_read_in_pkgs_stack_1(channel_idx).araddr  <= (others => '0');
-          hbm_read_in_pkgs_stack_1(channel_idx).arid    <= (others => '0');
-          hbm_read_in_pkgs_stack_1(channel_idx).arlen   <= (others => '0');
-     end generate;
-     -- deactivate unused channels of axi for hbm stack 0
+     -- Simplified: we remove the full crossbar to PCIe/XDMA and associated inactive-channel glue.
+     -- Keep only the mapping to the M00 AXI master via axi_hbm_0_master_* signals.
+     -- Deactivate unused channels of hbm stack 0
      make_channels_inactive_0: for channel_idx in 0 to axi_read_out_pkgs_stack_0'length - 1 generate
           axi_read_out_pkgs_stack_0(channel_idx).arready      <= '0';
           axi_read_out_pkgs_stack_0(channel_idx).rdata        <= (others => '0');
@@ -444,29 +322,32 @@ begin
           axi_read_out_pkgs_stack_0(channel_idx).rvalid       <= '0';
      end generate;
 
-     -- master of axi_for_hbm_0 is channel channel_bsk_idx of axi_for_all_channels
-     -- all signals from channel bsk are propageted to axi_hbm_0_master
-     -- so map input to input, output to output
-     axi_hbm_0_master_write_in.data            <= axi_write_in_pkgs_stack_1(channel_bsk_idx).wdata;
-     axi_hbm_0_master_write_in.crtl.addr       <= std_logic_vector(axi_write_in_pkgs_stack_1(channel_bsk_idx).awaddr);
-     axi_hbm_0_master_write_in.crtl.addr_valid <= axi_write_in_pkgs_stack_1(channel_bsk_idx).awvalid;
-     axi_hbm_0_master_write_in.crtl.len        <= burstlen_pad_bits & axi_write_in_pkgs_stack_1(channel_bsk_idx).awlen; -- burstlength conversion (did not find yet where to adjust it)
-     axi_hbm_0_master_write_in.crtl.ready      <= axi_write_in_pkgs_stack_1(channel_bsk_idx).bready;
-     axi_hbm_0_master_write_in.valid           <= axi_write_in_pkgs_stack_1(channel_bsk_idx).wvalid;
+     -- Map HBM write/read packages to the external M00 AXI master bridge
+     -- For a simplified M00-only flow: drive the M00 master input from the BSK channel
+     -- If you want a different channel, change channel_bsk_idx to the desired channel here.
+     axi_hbm_0_master_write_in.data            <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).wdata;
+     axi_hbm_0_master_write_in.crtl.addr       <= std_logic_vector(hbm_write_in_pkgs_stack_1(channel_bsk_idx).awaddr);
+     axi_hbm_0_master_write_in.crtl.addr_valid <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).awvalid;
+     axi_hbm_0_master_write_in.crtl.len        <= burstlen_pad_bits & hbm_write_in_pkgs_stack_1(channel_bsk_idx).awlen; -- burstlength conversion
+     axi_hbm_0_master_write_in.crtl.ready      <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).bready;
+     axi_hbm_0_master_write_in.valid           <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).wvalid;
      axi_hbm_0_master_write_in.strobe          <= std_logic_vector(hbm_strobe_setting);
      axi_hbm_0_master_write_in.crtl.burst      <= std_logic_vector(hbm_burstmode);
      axi_hbm_0_master_write_in.crtl.size       <= std_logic_vector(hbm_burstsize);
      axi_hbm_0_master_write_in.crtl.cache      <= (others => '0');
-     axi_hbm_0_master_write_in.crtl.id         <= axi_write_in_pkgs_stack_1(channel_bsk_idx).awid;
+     axi_hbm_0_master_write_in.crtl.id         <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).awid;
      axi_hbm_0_master_write_in.crtl.prot       <= (others => '0');
      axi_hbm_0_master_write_in.crtl.qos        <= (others => '0');
-     axi_hbm_0_master_write_in.last            <= axi_write_in_pkgs_stack_1(channel_bsk_idx).wlast;
+     axi_hbm_0_master_write_in.last            <= hbm_write_in_pkgs_stack_1(channel_bsk_idx).wlast;
 
-     axi_write_out_pkgs_stack_1(channel_bsk_idx).awready <= axi_hbm_0_master_write_out.crtl.addr_ready;
-     axi_write_out_pkgs_stack_1(channel_bsk_idx).wready  <= axi_hbm_0_master_write_out.ready;
-     axi_write_out_pkgs_stack_1(channel_bsk_idx).bresp   <= axi_hbm_0_master_write_out.crtl.resp;
-     axi_write_out_pkgs_stack_1(channel_bsk_idx).bvalid  <= axi_hbm_0_master_write_out.crtl.valid;
-     axi_write_out_pkgs_stack_1(channel_bsk_idx).bid  <= axi_hbm_0_master_write_out.crtl.id;
+     -- reflect response and ready back from the M00 master bridge into HBM write-out pkg
+     hbm_write_out_pkgs_stack_1(channel_bsk_idx).awready <= axi_hbm_0_master_write_out.crtl.addr_ready;
+     hbm_write_out_pkgs_stack_1(channel_bsk_idx).wready  <= axi_hbm_0_master_write_out.ready;
+     hbm_write_out_pkgs_stack_1(channel_bsk_idx).bresp   <= axi_hbm_0_master_write_out.crtl.resp;
+     hbm_write_out_pkgs_stack_1(channel_bsk_idx).bvalid  <= axi_hbm_0_master_write_out.crtl.valid;
+     hbm_write_out_pkgs_stack_1(channel_bsk_idx).bid     <= axi_hbm_0_master_write_out.crtl.id;
+
+     -- Simple default for read side: no active M00-initiated reads in this simplified flow
      axi_hbm_0_master_read_in.crtl.addr_valid            <= '0';
      axi_hbm_0_master_read_in.crtl.ready                 <= '0';
      axi_hbm_0_master_read_in.crtl.addr                  <= (others => '0');
@@ -478,32 +359,6 @@ begin
      axi_hbm_0_master_read_in.crtl.qos                   <= (others => '0');
      axi_hbm_0_master_read_in.crtl.size                  <= (others => '0');
 
-     pcie_inst: pcie4c_uscale_plus_0_wrapper
-          port map (
-               i_sys_clk    => i_sys_clk_pcie,
-               i_sys_clk_gt => i_sys_clk_gt,
-               i_reset_n    => internal_reset_n_apb,
-               pci_exp_rxp  => xdma_pci_exp_txp,
-               pci_exp_rxn  => xdma_pci_exp_txn,
-               pci_exp_txp  => xdma_pci_exp_rxp, --rx of xdma is tx of pcie
-               pci_exp_txn  => xdma_pci_exp_rxn
-          );
-
-     xdma_inst: xdma_0_wrapper
-          port map (
-               i_sys_clk                => i_sys_clk,
-               i_sys_clk_gt         => i_sys_clk_gt,
-               i_reset_n            => internal_reset_n_apb,
-               axi_master_write_out => axi_all_channels_master_write_out,
-               axi_master_read_out  => axi_all_channels_master_read_out,
-               axi_master_write_in  => axi_all_channels_master_write_in,
-               axi_master_read_in   => axi_all_channels_master_read_in,
-               pci_exp_rxp          => xdma_pci_exp_rxp,
-               pci_exp_rxn          => xdma_pci_exp_rxn,
-               pci_exp_txp          => xdma_pci_exp_txp,
-               pci_exp_txn          => xdma_pci_exp_txn,
-               o_axi_clk            => axi_clk,
-               o_axi_reset_n        => axi_reset_n
-          );
+     -- PCIe / XDMA instantiations removed for simplified M00-only HBM access
 
 end architecture;
