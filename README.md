@@ -1,9 +1,10 @@
 
 # Open-Source TFHE Accelerator
 
-<img align="right" width="400" height="auto" alt="" src="Secondary_data/tfhe-proc.png"/> This repository accompanies the paper [**“Towards a Functionally Complete and Parameterizable TFHE Processor”**]().  
+<img align="right" width="400" height="auto" alt="" src="images/tfhe-proc.png"/> This repository accompanies the paper [**“Towards a Functionally Complete and Parameterizable TFHE Processor”**]().  
 The design is written in a mix of **VHDL** and **SystemVerilog**, compatible with **Vivado 2024.1**.
 This is a fully fledged, parameterizable TFHE processor that connects via PCIe, enabling scalable, hardware-accelerated computation directly on encrypted data, achieving 240-480% higher bootstrapping throughput than current state-of-the-art designs. Hopefully, this will lay the foundation for the next generation of TFHE processors - moving us closer to practical, high-performance encrypted computing.   
+
 All content is for **academic research only**, provided *as is* without warranty.
 
 ---
