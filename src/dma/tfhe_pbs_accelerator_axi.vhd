@@ -1,26 +1,44 @@
-entity hbm_read_to_axi is
+library IEEE;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.numeric_std.all;
+
+library work;
+use work.constants_utils.all;
+use work.ip_cores_constants.all;
+use work.datatypes_utils.all;
+use work.math_utils.all;
+use work.tfhe_constants.all;
+use work.processor_utils.all;
+
+entity tfhe_pbs_accelerator_axi is
   generic (
-    C_AXI_ADDR_WIDTH : integer := 34;
-    C_AXI_DATA_WIDTH : integer := 256
+    C_M_AXI_ADDR_WIDTH : integer := axi_addr_bits;      -- should equal hbm_addr_width
+    C_M_AXI_DATA_WIDTH : integer := hbm_data_width;     -- must equal hbm_data_width
+    C_M_AXI_BURST_LEN  : integer := 16                  -- max burst length (beats)
   );
   port (
-    i_clk       : in  std_logic;
-    i_reset_n   : in  std_logic;
+    -- Core clock/reset
+    i_clk               : in  std_ulogic;
+    i_reset_n           : in  std_ulogic;
 
-    -- Custom HBM-style read port
-    i_req       : in  hbm_ps_in_read_pkg;
-    o_rsp       : out hbm_ps_out_read_pkg;
+    -- PBS control / output interface to the rest of your processor
+    i_ram_coeff_idx     : in  unsigned(0 to write_blocks_in_lwe_n_ram_bit_length - 1);
+    o_return_address    : out hbm_ps_port_memory_address;
+    o_out_valid         : out std_ulogic;
+    o_out_data          : out sub_polynom(0 to pbs_throughput - 1);
+    o_next_module_reset : out std_ulogic;
 
-    -- AXI read address channel
-    M_AXI_ARADDR  : out std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
+    --------------------------------------------------------------------
+    -- AXI4 READ MASTER INTERFACE (single port, to be wired to HBM)
+    --------------------------------------------------------------------
+    M_AXI_ARADDR  : out std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
     M_AXI_ARLEN   : out std_logic_vector(7 downto 0);
     M_AXI_ARSIZE  : out std_logic_vector(2 downto 0);
     M_AXI_ARBURST : out std_logic_vector(1 downto 0);
     M_AXI_ARVALID : out std_logic;
     M_AXI_ARREADY : in  std_logic;
 
-    -- AXI read data channel
-    M_AXI_RDATA   : in  std_logic_vector(C_AXI_DATA_WIDTH-1 downto 0);
+    M_AXI_RDATA   : in  std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
     M_AXI_RRESP   : in  std_logic_vector(1 downto 0);
     M_AXI_RLAST   : in  std_logic;
     M_AXI_RVALID  : in  std_logic;
@@ -28,65 +46,241 @@ entity hbm_read_to_axi is
   );
 end entity;
 
-architecture rtl of hbm_read_to_axi is
-  type state_t is (IDLE, SEND_AR, READ_DATA);
-  signal state : state_t;
+architecture rtl of tfhe_pbs_accelerator_axi is
 
-  signal araddr_reg  : std_logic_vector(C_AXI_ADDR_WIDTH-1 downto 0);
-  signal arlen_reg   : std_logic_vector(7 downto 0);
+  --------------------------------------------------------------------
+  -- Local constants for flattening HBM read ports
+  --------------------------------------------------------------------
+  constant NUM_AI_PORTS  : integer := ai_hbm_num_ps_ports;
+  constant NUM_BSK_PORTS : integer := bsk_hbm_num_ps_ports;
+  constant NUM_SCALAR    : integer := 3;  -- op, lut, b
+  constant NUM_READ_PORTS: integer := NUM_AI_PORTS + NUM_BSK_PORTS + NUM_SCALAR;
+
+  constant IDX_AI_START  : integer := 0;
+  constant IDX_BSK_START : integer := IDX_AI_START + NUM_AI_PORTS;
+  constant IDX_B_START   : integer := IDX_BSK_START + NUM_BSK_PORTS;
+  constant IDX_LUT       : integer := IDX_B_START + 1;
+  constant IDX_OP        : integer := IDX_LUT + 1;
+
+  --------------------------------------------------------------------
+  -- Signals between PBS accelerator and this wrapper
+  --------------------------------------------------------------------
+  signal ai_hbm_in   : hbm_ps_in_read_pkg_arr(0 to ai_hbm_num_ps_ports - 1);
+  signal ai_hbm_out  : hbm_ps_out_read_pkg_arr(0 to ai_hbm_num_ps_ports - 1);
+
+  signal bsk_hbm_in  : hbm_ps_in_read_pkg_arr(0 to bsk_hbm_num_ps_ports - 1);
+  signal bsk_hbm_out : hbm_ps_out_read_pkg_arr(0 to bsk_hbm_num_ps_ports - 1);
+
+  signal op_hbm_in   : hbm_ps_in_read_pkg;
+  signal op_hbm_out  : hbm_ps_out_read_pkg;
+
+  signal lut_hbm_in  : hbm_ps_in_read_pkg;
+  signal lut_hbm_out : hbm_ps_out_read_pkg;
+
+  signal b_hbm_in    : hbm_ps_in_read_pkg;
+  signal b_hbm_out   : hbm_ps_out_read_pkg;
+
+  --------------------------------------------------------------------
+  -- Flattened arrays for arbitration
+  --------------------------------------------------------------------
+  signal rd_req  : hbm_ps_in_read_pkg_arr(0 to NUM_READ_PORTS-1);
+  signal rd_rsp  : hbm_ps_out_read_pkg_arr(0 to NUM_READ_PORTS-1);
+
+  --------------------------------------------------------------------
+  -- AXI read-channel control
+  --------------------------------------------------------------------
+  type axi_state_t is (AXI_IDLE, AXI_ADDR, AXI_DATA);
+  signal axi_state      : axi_state_t := AXI_IDLE;
+
+  signal axi_araddr     : std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal axi_arlen      : std_logic_vector(7 downto 0) := (others => '0');
+  signal axi_arvalid    : std_logic := '0';
+  signal axi_rready     : std_logic := '0';
+
+  signal current_owner  : integer range 0 to NUM_READ_PORTS-1 := 0;
+  signal last_grant     : integer range 0 to NUM_READ_PORTS-1 := 0;
+
 begin
 
-  process(i_clk)
+  --------------------------------------------------------------------
+  -- Constant AXI parameters (HBM-like)
+  --------------------------------------------------------------------
+  M_AXI_ARSIZE  <= std_logic_vector(hbm_burstsize);    -- "101" for 32 bytes (256 bits)
+  M_AXI_ARBURST <= std_logic_vector(hbm_burstmode);    -- "01" = INCR
+
+  M_AXI_ARADDR  <= axi_araddr;
+  M_AXI_ARLEN   <= axi_arlen;
+  M_AXI_ARVALID <= axi_arvalid;
+  M_AXI_RREADY  <= axi_rready;
+
+  --------------------------------------------------------------------
+  -- Instantiate the original TFHE PBS accelerator
+  --------------------------------------------------------------------
+  u_pbs_accel : entity work.tfhe_pbs_accelerator
+    port map (
+      i_clk               => i_clk,
+      i_reset_n           => i_reset_n,
+      i_ram_coeff_idx     => i_ram_coeff_idx,
+      o_return_address    => o_return_address,
+      o_out_valid         => o_out_valid,
+      o_out_data          => o_out_data,
+      o_next_module_reset => o_next_module_reset,
+
+      i_ai_hbm_out        => ai_hbm_out,
+      i_bsk_hbm_out       => bsk_hbm_out,
+      i_op_hbm_out        => op_hbm_out,
+      i_lut_hbm_out       => lut_hbm_out,
+      i_b_hbm_out         => b_hbm_out,
+      o_ai_hbm_in         => ai_hbm_in,
+      o_bsk_hbm_in        => bsk_hbm_in,
+      o_op_hbm_in         => op_hbm_in,
+      o_lut_hbm_in        => lut_hbm_in,
+      o_b_hbm_in          => b_hbm_in
+    );
+
+  --------------------------------------------------------------------
+  -- Flatten per-port HBM requests into single array rd_req
+  --------------------------------------------------------------------
+  gen_ai_flatten : for i in 0 to NUM_AI_PORTS-1 generate
+  begin
+    rd_req(IDX_AI_START + i) <= ai_hbm_in(i);
+    ai_hbm_out(i)           <= rd_rsp(IDX_AI_START + i);
+  end generate;
+
+  gen_bsk_flatten : for i in 0 to NUM_BSK_PORTS-1 generate
+  begin
+    rd_req(IDX_BSK_START + i) <= bsk_hbm_in(i);
+    bsk_hbm_out(i)           <= rd_rsp(IDX_BSK_START + i);
+  end generate;
+
+  -- b, lut, op are single ports
+  rd_req(IDX_B_START) <= b_hbm_in;
+  b_hbm_out           <= rd_rsp(IDX_B_START);
+
+  rd_req(IDX_LUT)     <= lut_hbm_in;
+  lut_hbm_out         <= rd_rsp(IDX_LUT);
+
+  rd_req(IDX_OP)      <= op_hbm_in;
+  op_hbm_out          <= rd_rsp(IDX_OP);
+
+  --------------------------------------------------------------------
+  -- AXI Read Arbiter:
+  --  - Round-robin over NUM_READ_PORTS
+  --  - Single outstanding burst at a time
+  --  - AR* taken from selected rd_req(port)
+  --  - R* delivered to rd_rsp(port)
+  --------------------------------------------------------------------
+  axi_read_arbiter : process(i_clk)
+    variable found   : boolean;
+    variable cand    : integer;
+    variable j       : integer;
   begin
     if rising_edge(i_clk) then
       if i_reset_n = '0' then
-        state          <= IDLE;
-        M_AXI_ARVALID  <= '0';
-        M_AXI_RREADY   <= '0';
-        o_rsp.valid    <= '0';
-        -- init others...
+        axi_state   <= AXI_IDLE;
+        axi_araddr  <= (others => '0');
+        axi_arlen   <= (others => '0');
+        axi_arvalid <= '0';
+        axi_rready  <= '0';
+        current_owner <= 0;
+        last_grant    <= 0;
+
+        -- Reset all rd_rsp control flags
+        for i in 0 to NUM_READ_PORTS-1 loop
+          rd_rsp(i).rdata        <= (others => '0');
+          rd_rsp(i).rdata_parity <= (others => '0');
+          rd_rsp(i).rlast        <= '0';
+          rd_rsp(i).rresp        <= (others => '0');
+          rd_rsp(i).rid          <= (others => '0');
+          rd_rsp(i).rvalid       <= '0';
+          rd_rsp(i).arready      <= '0';
+        end loop;
+
       else
-        case state is
-          when IDLE =>
-            o_rsp.valid <= '0';
-            M_AXI_RREADY <= '0';
+        -- Default: no arready / rvalid pulses unless set below
+        for i in 0 to NUM_READ_PORTS-1 loop
+          rd_rsp(i).rvalid  <= '0';
+          rd_rsp(i).rlast   <= '0';
+          rd_rsp(i).arready <= '0';
+        end loop;
 
-            if i_req.valid = '1' then
-              -- Map record fields:
-              araddr_reg   <= std_logic_vector(i_req.addr); -- adjust type/resizing
-              arlen_reg    <= std_logic_vector(i_req.len);  -- beats-1
+        case axi_state is
 
-              M_AXI_ARADDR  <= std_logic_vector(i_req.addr);
-              M_AXI_ARLEN   <= std_logic_vector(i_req.len);
-              M_AXI_ARSIZE  <= "101"; -- log2(bytes per beat): 2^5 = 32 bytes for 256b, adjust
-              M_AXI_ARBURST <= "01";  -- INCR
-              M_AXI_ARVALID <= '1';
-              state         <= SEND_AR;
-            end if;
+          ------------------------------------------------------
+          -- IDLE: search for next requesting port (round-robin)
+          ------------------------------------------------------
+          when AXI_IDLE =>
+            axi_arvalid <= '0';
+            axi_rready  <= '0';
 
-          when SEND_AR =>
-            if M_AXI_ARVALID = '1' and M_AXI_ARREADY = '1' then
-              M_AXI_ARVALID <= '0';
-              M_AXI_RREADY  <= '1';
-              state         <= READ_DATA;
-            end if;
+            found := false;
+            cand  := last_grant;
 
-          when READ_DATA =>
-            if M_AXI_RVALID = '1' then
-              -- Drive HBM response record
-              o_rsp.data  <= M_AXI_RDATA;
-              o_rsp.valid <= '1';
-              o_rsp.last  <= M_AXI_RLAST;  -- if field exists 
-              if M_AXI_RLAST = '1' then
-                M_AXI_RREADY <= '0';
-                state        <= IDLE;
+            for offset in 1 to NUM_READ_PORTS loop
+              j := (last_grant + offset) mod NUM_READ_PORTS;
+              if rd_req(j).arvalid = '1' then
+                cand  := j;
+                found := true;
+                exit;
               end if;
-            else
-              o_rsp.valid <= '0';
+            end loop;
+
+            if found then
+              current_owner <= cand;
+              last_grant    <= cand;
+
+              -- Drive AXI AR from selected request
+              axi_araddr <= std_logic_vector(rd_req(cand).araddr);
+
+              -- Extend 4-bit (HBM) burstlen to 8-bit AXI LEN
+              axi_arlen            <= (others => '0');
+              axi_arlen(hbm_burstlen_bit_width-1 downto 0)
+                                <= rd_req(cand).arlen;
+
+              axi_arvalid <= '1';
+              axi_state   <= AXI_ADDR;
+            end if;
+
+          ------------------------------------------------------
+          -- AXI_ADDR: wait for AR handshake
+          ------------------------------------------------------
+          when AXI_ADDR =>
+            if axi_arvalid = '1' and M_AXI_ARREADY = '1' then
+              axi_arvalid <= '0';
+
+              -- Pulse arready toward the selected port (one cycle)
+              rd_rsp(current_owner).arready <= '1';
+
+              -- Start accepting data; RREADY follows TFHE rready
+              axi_rready <= std_logic(rd_req(current_owner).rready);
+              axi_state  <= AXI_DATA;
+            end if;
+
+          ------------------------------------------------------
+          -- AXI_DATA: route R channel to the current owner
+          ------------------------------------------------------
+          when AXI_DATA =>
+            -- RREADY tracks TFHE rready
+            axi_rready <= std_logic(rd_req(current_owner).rready);
+
+            if M_AXI_RVALID = '1' then
+              rd_rsp(current_owner).rdata        <= M_AXI_RDATA;
+              rd_rsp(current_owner).rdata_parity <= (others => '0'); -- parity unused here
+              rd_rsp(current_owner).rresp        <= M_AXI_RRESP;
+              rd_rsp(current_owner).rid          <= (others => '0'); -- no ID tracking
+              rd_rsp(current_owner).rvalid       <= '1';
+              rd_rsp(current_owner).rlast        <= M_AXI_RLAST;
+
+              -- Finish transaction only when handshake on last beat
+              if (M_AXI_RLAST = '1') and (axi_rready = '1') then
+                axi_rready <= '0';
+                axi_state  <= AXI_IDLE;
+              end if;
             end if;
 
         end case;
       end if;
     end if;
   end process;
+
 end architecture;
