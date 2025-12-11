@@ -21,15 +21,15 @@ entity tfhe_pbs_accelerator_axi is
     i_clk               : in  std_ulogic;
     i_reset_n           : in  std_ulogic;
 
-    -- PBS control / output interface to the rest of your processor
-    i_ram_coeff_idx     : in  unsigned(0 to write_blocks_in_lwe_n_ram_bit_length - 1);
+    -- PBS control / output interface to the rest of the processor
+    o_ram_coeff_idx     : out unsigned(0 to write_blocks_in_lwe_n_ram_bit_length - 1);
     o_return_address    : out hbm_ps_port_memory_address;
     o_out_valid         : out std_ulogic;
     o_out_data          : out sub_polynom(0 to pbs_throughput - 1);
     o_next_module_reset : out std_ulogic;
 
     --------------------------------------------------------------------
-    -- AXI4 READ MASTER INTERFACE (single port, to be wired to HBM)
+    -- AXI4 READ MASTER INTERFACE (single port, to be read from HBM)
     --------------------------------------------------------------------
     M_AXI_ARADDR  : out std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
     M_AXI_ARLEN   : out std_logic_vector(7 downto 0);
@@ -42,7 +42,26 @@ entity tfhe_pbs_accelerator_axi is
     M_AXI_RRESP   : in  std_logic_vector(1 downto 0);
     M_AXI_RLAST   : in  std_logic;
     M_AXI_RVALID  : in  std_logic;
-    M_AXI_RREADY  : out std_logic
+    M_AXI_RREADY  : out std_logic;
+
+    --------------------------------------------------------------------
+    -- AXI4 WRITE MASTER INTERFACE (for PBS result to HBM)
+    --------------------------------------------------------------------
+    M_AXI_AWADDR  : out std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
+    M_AXI_AWLEN   : out std_logic_vector(7 downto 0);
+    M_AXI_AWSIZE  : out std_logic_vector(2 downto 0);
+    M_AXI_AWBURST : out std_logic_vector(1 downto 0);
+    M_AXI_AWVALID : out std_logic;
+    M_AXI_AWREADY : in  std_logic;
+
+    M_AXI_WDATA   : out std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+    M_AXI_WVALID  : out std_logic;
+    M_AXI_WLAST   : out std_logic;
+    M_AXI_WREADY  : in  std_logic;
+
+    M_AXI_BRESP   : in  std_logic_vector(1 downto 0);
+    M_AXI_BVALID  : in  std_logic;
+    M_AXI_BREADY  : out std_logic
   );
 end entity;
 
@@ -100,18 +119,35 @@ architecture rtl of tfhe_pbs_accelerator_axi is
   signal current_owner  : integer range 0 to NUM_READ_PORTS-1 := 0;
   signal last_grant     : integer range 0 to NUM_READ_PORTS-1 := 0;
 
+  --------------------------------------------------------------------
+  -- PBS result & write-to-HBM wiring
+  --------------------------------------------------------------------
+  signal pbs_out_data_s          : sub_polynom(0 to pbs_throughput - 1);
+  signal pbs_out_valid_s         : std_ulogic;
+  signal pbs_next_module_reset_s : std_ulogic;
+  signal pbs_return_addr_s       : hbm_ps_port_memory_address;
+
+  signal ram_coeff_idx_s         : unsigned(0 to write_blocks_in_lwe_n_ram_bit_length - 1);
+
+  signal hbm_write_in_s          : hbm_ps_in_write_pkg;
+  signal hbm_write_out_s         : hbm_ps_out_write_pkg;
+
 begin
 
   --------------------------------------------------------------------
   -- Constant AXI parameters (HBM-like)
   --------------------------------------------------------------------
-  M_AXI_ARSIZE  <= std_logic_vector(hbm_burstsize);    -- "101" for 32 bytes (256 bits)
+  M_AXI_ARSIZE  <= std_logic_vector(hbm_burstsize);    -- e.g., "101" for 32 bytes (256 bits)
   M_AXI_ARBURST <= std_logic_vector(hbm_burstmode);    -- "01" = INCR
 
   M_AXI_ARADDR  <= axi_araddr;
   M_AXI_ARLEN   <= axi_arlen;
   M_AXI_ARVALID <= axi_arvalid;
   M_AXI_RREADY  <= axi_rready;
+
+  -- WRITE side: constant settings
+  M_AXI_AWSIZE  <= std_logic_vector(hbm_burstsize);
+  M_AXI_AWBURST <= std_logic_vector(hbm_burstmode);
 
   --------------------------------------------------------------------
   -- Instantiate the original TFHE PBS accelerator
@@ -120,11 +156,11 @@ begin
     port map (
       i_clk               => i_clk,
       i_reset_n           => i_reset_n,
-      i_ram_coeff_idx     => i_ram_coeff_idx,
-      o_return_address    => o_return_address,
-      o_out_valid         => o_out_valid,
-      o_out_data          => o_out_data,
-      o_next_module_reset => o_next_module_reset,
+      i_ram_coeff_idx     => ram_coeff_idx_s,
+      o_return_address    => pbs_return_addr_s,
+      o_out_valid         => pbs_out_valid_s,
+      o_out_data          => pbs_out_data_s,
+      o_next_module_reset => pbs_next_module_reset_s,
 
       i_ai_hbm_out        => ai_hbm_out,
       i_bsk_hbm_out       => bsk_hbm_out,
@@ -138,8 +174,60 @@ begin
       o_b_hbm_in          => b_hbm_in
     );
 
+  -- Expose PBS outputs to the outside 
+  o_out_data          <= pbs_out_data_s;
+  o_out_valid         <= pbs_out_valid_s;
+  o_next_module_reset <= pbs_next_module_reset_s;
+  o_return_address    <= pbs_return_addr_s;
+  o_ram_coeff_idx     <= ram_coeff_idx_s;
+
   --------------------------------------------------------------------
-  -- Flatten per-port HBM requests into single array rd_req
+  -- Integrate pbs_lwe_n_storage_read_to_hbm: PBS result to HBM write pkg
+  --------------------------------------------------------------------
+  u_pbs_lwe_to_hbm : entity work.pbs_lwe_n_storage_read_to_hbm
+    port map (
+      i_clk           => i_clk,
+      i_coeffs        => pbs_out_data_s,
+      i_coeffs_valid  => pbs_out_valid_s,
+      i_reset         => pbs_next_module_reset_s,
+      i_hbm_write_out => hbm_write_out_s,
+      o_hbm_write_in  => hbm_write_in_s,
+      o_ram_coeff_idx => ram_coeff_idx_s
+    );
+
+  --------------------------------------------------------------------
+  -- Map HBM write package to AXI WRITE CHANNEL
+  --------------------------------------------------------------------
+  -- Address channel
+  M_AXI_AWADDR  <= std_logic_vector(hbm_write_in_s.awaddr);
+  M_AXI_AWLEN <= (others => '0');
+  M_AXI_AWLEN(hbm_burstlen_bit_width-1 downto 0)
+        <= std_logic_vector(hbm_write_in_s.awlen(hbm_burstlen_bit_width-1 downto 0));
+
+  -- Simpler & explicit: extend burstlen to 8 bits
+  M_AXI_AWLEN(hbm_burstlen_bit_width-1 downto 0) <= hbm_write_in_s.awlen;
+  -- Upper bits remain '0' by default
+  -- (we rely on initial value of M_AXI_AWLEN in reset or tool will warn if not)
+
+  M_AXI_AWVALID <= hbm_write_in_s.awvalid;
+
+  -- Write data channel
+  M_AXI_WDATA   <= hbm_write_in_s.wdata;
+  M_AXI_WVALID  <= hbm_write_in_s.wvalid;
+  M_AXI_WLAST   <= hbm_write_in_s.wlast;
+
+  -- Write response channel
+  M_AXI_BREADY  <= hbm_write_in_s.bready;
+
+  -- Feedback AXI handshake into HBM write_out_s
+  hbm_write_out_s.awready <= M_AXI_AWREADY;
+  hbm_write_out_s.wready  <= M_AXI_WREADY;
+  hbm_write_out_s.bvalid  <= M_AXI_BVALID;
+  hbm_write_out_s.bresp   <= M_AXI_BRESP;
+  hbm_write_out_s.bid     <= (others => '0'); -- not used
+
+  --------------------------------------------------------------------
+  -- Flatten per-port HBM READ requests into single array rd_req
   --------------------------------------------------------------------
   gen_ai_flatten : for i in 0 to NUM_AI_PORTS-1 generate
   begin

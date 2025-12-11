@@ -14,12 +14,12 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     parameter integer C_M_AXI_BUSER_WIDTH  = 0
 )
 (
-    // Compatibility ports (not used anymore)
+    // Not used anymore
     input  wire INIT_AXI_TXN,
     output wire TXN_DONE,
     output wire ERROR,
 
-    // Clock / reset
+    // Clock / Reset
     input  wire M_AXI_ACLK,
     input  wire M_AXI_ARESETN,
 
@@ -27,7 +27,7 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     // AXI4 MASTER INTERFACE
     // ---------------------------------------------------------
 
-    // -------------------- WRITE ADDRESS --------------------
+    // -------------------- WRITE ADDRESS CHANNEL --------------------
     output wire  [C_M_AXI_ID_WIDTH-1:0]    M_AXI_AWID,
     output wire  [C_M_AXI_ADDR_WIDTH-1:0]  M_AXI_AWADDR,
     output wire  [7:0]                     M_AXI_AWLEN,
@@ -41,7 +41,7 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     output wire                            M_AXI_AWVALID,
     input  wire                            M_AXI_AWREADY,
 
-    // -------------------- WRITE DATA --------------------
+    // -------------------- WRITE DATA CHANNEL --------------------
     output wire  [C_M_AXI_DATA_WIDTH-1:0]   M_AXI_WDATA,
     output wire  [C_M_AXI_DATA_WIDTH/8-1:0] M_AXI_WSTRB,
     output wire                             M_AXI_WLAST,
@@ -56,7 +56,7 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     input  wire                            M_AXI_BVALID,
     output wire                            M_AXI_BREADY,
 
-    // -------------------- READ ADDRESS --------------------
+    // -------------------- READ ADDRESS CHANNEL --------------------
     output wire  [C_M_AXI_ID_WIDTH-1:0]    M_AXI_ARID,
     output wire  [C_M_AXI_ADDR_WIDTH-1:0]  M_AXI_ARADDR,
     output wire  [7:0]                     M_AXI_ARLEN,
@@ -70,7 +70,7 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     output wire                            M_AXI_ARVALID,
     input  wire                            M_AXI_ARREADY,
 
-    // -------------------- READ DATA --------------------
+    // -------------------- READ DATA CHANNEL --------------------
     input  wire  [C_M_AXI_ID_WIDTH-1:0]    M_AXI_RID,
     input  wire  [C_M_AXI_DATA_WIDTH-1:0]  M_AXI_RDATA,
     input  wire  [1:0]                     M_AXI_RRESP,
@@ -82,37 +82,30 @@ module tfhe_w_master_full_v1_0_M00_AXI #
 
 //
 // ================================================================
-// CONSTANT TIE-OFFS (correct AXI initialization)
+// CONSTANT TIE-OFFS FOR UNUSED AXI SIGNALS
 // ================================================================
-//
-
-// ---------- WRITE ADDRESS CONSTANTS ----------
 assign M_AXI_AWID    = {C_M_AXI_ID_WIDTH{1'b0}};
 assign M_AXI_AWLOCK  = 1'b0;
 assign M_AXI_AWCACHE = 4'b0010;
-assign M_AXI_AWPROT  = 3'h0;
-assign M_AXI_AWQOS   = 4'h0;
+assign M_AXI_AWPROT  = 3'b000;
+assign M_AXI_AWQOS   = 4'b0000;
 assign M_AXI_AWUSER  = {C_M_AXI_AWUSER_WIDTH{1'b0}};
 
-// ---------- READ ADDRESS CONSTANTS ----------
 assign M_AXI_ARID    = {C_M_AXI_ID_WIDTH{1'b0}};
 assign M_AXI_ARLOCK  = 1'b0;
 assign M_AXI_ARCACHE = 4'b0010;
-assign M_AXI_ARPROT  = 3'h0;
-assign M_AXI_ARQOS   = 4'h0;
+assign M_AXI_ARPROT  = 3'b000;
+assign M_AXI_ARQOS   = 4'b0000;
 assign M_AXI_ARUSER  = {C_M_AXI_ARUSER_WIDTH{1'b0}};
 
-// ---------- WRITE DATA CONSTANTS ----------
-assign M_AXI_WUSER   = {C_M_AXI_WUSER_WIDTH{1'b0}};
-assign M_AXI_WSTRB   = { (C_M_AXI_DATA_WIDTH/8){ 1'b1 } };  // full strobe
+assign M_AXI_WSTRB = { (C_M_AXI_DATA_WIDTH/8){1'b1} };
+assign M_AXI_WUSER = {C_M_AXI_WUSER_WIDTH{1'b0}};
+
 
 //
 // ================================================================
-// INTERNAL WIRES → DRIVEN BY TFHE WRAPPER
+// INTERNAL WIRES FROM TFHE VHDL AXI WRAPPER
 // ================================================================
-//
-
-// WRITE channel
 wire [C_M_AXI_ADDR_WIDTH-1:0] tfhe_awaddr;
 wire                          tfhe_awvalid;
 wire [C_M_AXI_DATA_WIDTH-1:0] tfhe_wdata;
@@ -120,70 +113,87 @@ wire                          tfhe_wvalid;
 wire                          tfhe_wlast;
 wire                          tfhe_bready;
 
-// READ channel
 wire [C_M_AXI_ADDR_WIDTH-1:0] tfhe_araddr;
 wire                          tfhe_arvalid;
 wire                          tfhe_rready;
 
-//
-// ================================================================
-// CONNECT TFHE → AXI MASTER
-// ================================================================
-//
-
-// ---------------- WRITE CONNECTIONS ----------------
-assign M_AXI_AWADDR = tfhe_awaddr;
-assign M_AXI_AWLEN  = C_M_AXI_BURST_LEN - 1;
-assign M_AXI_AWSIZE = $clog2(C_M_AXI_DATA_WIDTH/8);
-assign M_AXI_AWBURST= 2'b01;
-assign M_AXI_AWVALID= tfhe_awvalid;
-
-assign M_AXI_WDATA  = tfhe_wdata;
-assign M_AXI_WVALID = tfhe_wvalid;
-assign M_AXI_WLAST  = tfhe_wlast;
-
-assign M_AXI_BREADY = tfhe_bready;
-
-// ---------------- READ CONNECTIONS ----------------
-assign M_AXI_ARADDR = tfhe_araddr;
-assign M_AXI_ARLEN  = C_M_AXI_BURST_LEN - 1;
-assign M_AXI_ARSIZE = $clog2(C_M_AXI_DATA_WIDTH/8);
-assign M_AXI_ARBURST= 2'b01;
-assign M_AXI_ARVALID= tfhe_arvalid;
-
-assign M_AXI_RREADY = tfhe_rready;
 
 //
 // ================================================================
-// INSTANTIATE THE TFHE ACCELERATOR AXI WRAPPER
+// CONNECT TFHE to AXI WRAPPER (WRITE + READ)
 // ================================================================
-//
 
+// ---------------- WRITE ----------------
+assign M_AXI_AWADDR  = tfhe_awaddr;
+assign M_AXI_AWLEN   = C_M_AXI_BURST_LEN - 1;
+assign M_AXI_AWSIZE  = $clog2(C_M_AXI_DATA_WIDTH/8);
+assign M_AXI_AWBURST = 2'b01;   // INCR
+assign M_AXI_AWVALID = tfhe_awvalid;
+
+assign M_AXI_WDATA   = tfhe_wdata;
+assign M_AXI_WVALID  = tfhe_wvalid;
+assign M_AXI_WLAST   = tfhe_wlast;
+
+assign M_AXI_BREADY  = tfhe_bready;
+
+// ---------------- READ ----------------
+assign M_AXI_ARADDR  = tfhe_araddr;
+assign M_AXI_ARVALID = tfhe_arvalid;
+assign M_AXI_ARLEN   = C_M_AXI_BURST_LEN - 1;
+assign M_AXI_ARSIZE  = $clog2(C_M_AXI_DATA_WIDTH/8);
+assign M_AXI_ARBURST = 2'b01;
+
+assign M_AXI_RREADY  = tfhe_rready;
+
+
+//
+// ================================================================
+// INSTANTIATE UPDATED VHDL WRAPPER ( WRITE + READ)
+// ================================================================
 tfhe_pbs_accelerator_axi #(
     .C_M_AXI_ADDR_WIDTH (C_M_AXI_ADDR_WIDTH),
     .C_M_AXI_DATA_WIDTH (C_M_AXI_DATA_WIDTH),
     .C_M_AXI_BURST_LEN  (C_M_AXI_BURST_LEN)
 ) u_tfhe (
-    .i_clk        (M_AXI_ACLK),
-    .i_reset_n    (M_AXI_ARESETN),
+    .i_clk     (M_AXI_ACLK),
+    .i_reset_n (M_AXI_ARESETN),
 
-    // -----------------------------
-    // AXI READ CHANNEL ONLY
-    // -----------------------------
-    .M_AXI_ARADDR (tfhe_araddr),
-    .M_AXI_ARVALID(tfhe_arvalid),
-    .M_AXI_ARREADY(M_AXI_ARREADY),
+    // ------------ READ ------------
+    .M_AXI_ARADDR  (tfhe_araddr),
+    .M_AXI_ARLEN   (),                 // internally handled in VHDL, for now
+    .M_AXI_ARSIZE  (),
+    .M_AXI_ARBURST (),
+    .M_AXI_ARVALID (tfhe_arvalid),
+    .M_AXI_ARREADY (M_AXI_ARREADY),
 
-    .M_AXI_RDATA  (M_AXI_RDATA),
-    .M_AXI_RRESP  (M_AXI_RRESP),
-    .M_AXI_RLAST  (M_AXI_RLAST),
-    .M_AXI_RVALID (M_AXI_RVALID),
-    .M_AXI_RREADY (tfhe_rready)
+    .M_AXI_RDATA   (M_AXI_RDATA),
+    .M_AXI_RRESP   (M_AXI_RRESP),
+    .M_AXI_RLAST   (M_AXI_RLAST),
+    .M_AXI_RVALID  (M_AXI_RVALID),
+    .M_AXI_RREADY  (tfhe_rready),
+
+    // ------------ WRITE ------------
+    .M_AXI_AWADDR  (tfhe_awaddr),
+    .M_AXI_AWLEN   (),                 // internally handled in VHDL, for now
+    .M_AXI_AWSIZE  (),
+    .M_AXI_AWBURST (),
+    .M_AXI_AWVALID (tfhe_awvalid),
+    .M_AXI_AWREADY (M_AXI_AWREADY),
+
+    .M_AXI_WDATA   (tfhe_wdata),
+    .M_AXI_WVALID  (tfhe_wvalid),
+    .M_AXI_WLAST   (tfhe_wlast),
+    .M_AXI_WREADY  (M_AXI_WREADY),
+
+    .M_AXI_BRESP   (M_AXI_BRESP),
+    .M_AXI_BVALID  (M_AXI_BVALID),
+    .M_AXI_BREADY  (tfhe_bready)
 );
+
 
 //
 // ================================================================
-// UNUSED OUTPUTS
+// UNUSED STATUS OUTPUTS
 // ================================================================
 assign TXN_DONE = 1'b0;
 assign ERROR    = 1'b0;
