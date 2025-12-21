@@ -149,12 +149,16 @@ architecture rtl of tfhe_pbs_accelerator_axi is
   type pbs_ctrl_state_t is (
   IDLE,
   RUN,
-  DRAIN,
-  DONE
+  DRAIN
+  --,
+  --DONE
   );
 
   signal led_cnt    : unsigned(23 downto 0) := (others => '0');
   signal led_shift : std_logic_vector(6 downto 0) := "0000001";
+  signal led_cnt_bin : unsigned(6 downto 0) := (others => '0');
+
+  signal temp_delay    : unsigned(23 downto 0) := (others => '0');
 
   signal start_pbs_d : std_ulogic := '0';
   signal start_pbs_pulse : std_ulogic;
@@ -290,9 +294,13 @@ begin
 
   -- PBS status outputs
   pbs_busy <= '1' when (pbs_state = RUN or pbs_state = DRAIN) else '0';
-  pbs_done <= '1' when (pbs_state = DONE) else '0';
+  pbs_done <= '1' when (pbs_state = IDLE) else '0';
 
 
+  -- Rising edge detector for the start_pbs signal
+  -- Captures the previous state of start_pbs on each clock cycle
+  -- Generates a single-cycle pulse when start_pbs transitions from low to high
+  -- Used to create a synchronous, one-shot trigger for PBS accelerator initiation
   process(i_clk)
   begin
     if rising_edge(i_clk) then
@@ -365,8 +373,14 @@ begin
             end if;
             user_led <= '0' & led_shift;
 
-            if pbs_next_module_reset_s = '1' then
+            -- if pbs_next_module_reset_s = '1' then
+            --   pbs_state <= DRAIN;
+            -- end if;
+
+            temp_delay <= temp_delay + 1;
+            if temp_delay = x"FFFFFF" then
               pbs_state <= DRAIN;
+              temp_delay <= (others => '0');
             end if;
 
           ------------------------------------------------
@@ -376,36 +390,45 @@ begin
             pbs_busy <= '1';
             pbs_done <= '0';
 
-            -- same rotating pattern
-            if led_cnt = 0 then
-              led_shift <= led_shift(5 downto 0) & led_shift(6);
-            end if;
-            user_led <= '0' & led_shift;
 
-            if hbm_write_in_s.awvalid = '0' and
-              hbm_write_in_s.wvalid  = '0' then
-              pbs_state <= DONE;
+            if led_cnt(21 downto 0) = 0 then
+              led_cnt_bin <= led_cnt_bin + 1;
+            end if;
+
+            user_led <= std_logic_vector(led_cnt_bin) & '0';
+
+            -- if hbm_write_in_s.awvalid = '0' and
+            --   hbm_write_in_s.wvalid  = '0' then
+            --   pbs_state <= DONE;
+            -- end if;
+            temp_delay <= temp_delay + 1;
+            if temp_delay = x"FFFFFF" then
+              pbs_state <= IDLE;
+              pbs_enable <= '0';
+              pbs_busy   <= '0';
+              pbs_done   <= '1';
+              temp_delay <= (others => '0');
             end if;
 
           ------------------------------------------------
           -- DONE
           ------------------------------------------------
-          when DONE =>
-            pbs_enable <= '0';
-            pbs_busy   <= '0';
-            pbs_done   <= '1';
+          -- when DONE =>
+          --   pbs_enable <= '0';
+          --   pbs_busy   <= '0';
+          --   pbs_done   <= '1';
 
-            -- LED: all ON (7 LEDs)
-            user_led <= "01111111";
+          --   -- LED: all ON (7 LEDs)
+          --   user_led <= "01111111";
 
-            if start_pbs = '0' then
-              pbs_state <= IDLE;
-              pbs_done  <= '0';
+          --   if start_pbs = '0' then
+          --     pbs_state <= IDLE;
+          --     pbs_done  <= '0';
 
-              -- reset LEDs for next run
-              led_cnt   <= (others => '0');
-              led_shift <= "0000001";
-            end if;
+          --     -- reset LEDs for next run
+          --     led_cnt   <= (others => '0');
+          --     led_shift <= "0000001";
+          --   end if;
 
         end case;
       end if;
