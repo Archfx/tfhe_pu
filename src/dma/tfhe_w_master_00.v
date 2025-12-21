@@ -80,13 +80,22 @@ module tfhe_w_master_full_v1_0_M00_AXI #
     input  wire                            M_AXI_RVALID,
     output wire                            M_AXI_RREADY,
 
-    // --------------- CONTROLL REGS ------------------------------
-    input wire [C_S_AXI_DATA_WIDTH-1 : 0] host_data_address_0,
-	input wire [C_S_AXI_DATA_WIDTH-1 : 0] host_data_address_1,
-	output wire [C_S_AXI_DATA_WIDTH-1 : 0] host_data_address_2,
-	output wire [C_S_AXI_DATA_WIDTH-1 : 0] host_data_address_3,
+    // --------------------------------------------------
+    // TFHE processor inputs (module-controlled state)
+    // --------------------------------------------------
+    output  wire [C_S_AXI_DATA_WIDTH-1:0] host_rd_addr,
+    output  wire [C_S_AXI_DATA_WIDTH-1:0] host_rd_len,
+    output  wire                          pbs_busy,
+    output  wire                          pbs_done,
 
-	input wire start_pbs
+    // --------------------------------------------------
+    // Controller outputs
+    // --------------------------------------------------
+    input wire [C_S_AXI_DATA_WIDTH-1:0] host_wr_addr,
+    input wire [C_S_AXI_DATA_WIDTH-1:0] host_wr_len,
+    input wire                          start_pbs,
+
+    output [7:0] user_led
 );
 
 //
@@ -162,11 +171,11 @@ assign M_AXI_RREADY  = tfhe_rready;
 tfhe_pbs_accelerator_axi #(
     .C_M_AXI_ADDR_WIDTH (C_M_AXI_ADDR_WIDTH),
     .C_M_AXI_DATA_WIDTH (C_M_AXI_DATA_WIDTH),
-    .C_M_AXI_BURST_LEN  (C_M_AXI_BURST_LEN)
+    .C_M_AXI_BURST_LEN  (C_M_AXI_BURST_LEN),
+    .C_S_AXI_DATA_WIDTH (C_S_AXI_DATA_WIDTH)
 ) u_tfhe (
     .i_clk     (M_AXI_ACLK),
     .i_reset_n (M_AXI_ARESETN),
-    .start_pbs (start_pbs),
 
     // ------------ READ ------------
     .M_AXI_ARADDR  (tfhe_araddr),
@@ -197,7 +206,14 @@ tfhe_pbs_accelerator_axi #(
 
     .M_AXI_BRESP   (M_AXI_BRESP),
     .M_AXI_BVALID  (M_AXI_BVALID),
-    .M_AXI_BREADY  (tfhe_bready)
+    .M_AXI_BREADY  (tfhe_bready),
+    
+    .user_led(user_led),
+    .host_rd_addr(host_rd_addr),
+    .host_rd_len(host_rd_len),
+    .pbs_busy(pbs_busy),
+    .pbs_done(pbs_done),
+    .start_pbs(start_pbs)
 );
 
 

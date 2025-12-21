@@ -14,15 +14,13 @@ entity tfhe_pbs_accelerator_axi is
   generic (
     C_M_AXI_ADDR_WIDTH : integer := axi_addr_bits;      -- should equal hbm_addr_width
     C_M_AXI_DATA_WIDTH : integer := hbm_data_width;     -- must equal hbm_data_width
-    C_M_AXI_BURST_LEN  : integer := 16                  -- max burst length (beats)
+    C_M_AXI_BURST_LEN  : integer := 16;                  -- max burst length (beats)
+    C_S_AXI_DATA_WIDTH : integer := 32
   );
   port (
     -- Core clock/reset
     i_clk               : in  std_ulogic;
     i_reset_n           : in  std_ulogic;
-
-    -- Control signals
-    start_pbs           : in  std_ulogic;
 
     -- PBS control / output interface to the rest of the processor
     o_ram_coeff_idx     : out unsigned(0 to write_blocks_in_lwe_n_ram_bit_length - 1);
@@ -64,7 +62,16 @@ entity tfhe_pbs_accelerator_axi is
 
     M_AXI_BRESP   : in  std_logic_vector(1 downto 0);
     M_AXI_BVALID  : in  std_logic;
-    M_AXI_BREADY  : out std_logic
+    M_AXI_BREADY  : out std_logic;
+
+    -- Control signals
+    user_led        : out std_logic_vector(7 downto 0);
+    host_rd_addr    : out std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+    host_rd_len     : out std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+    pbs_busy        : out std_logic;
+    pbs_done        : out std_logic;
+    start_pbs       : in  std_ulogic
+  
   );
 end entity;
 
@@ -135,23 +142,24 @@ architecture rtl of tfhe_pbs_accelerator_axi is
   signal hbm_write_in_s          : hbm_ps_in_write_pkg;
   signal hbm_write_out_s         : hbm_ps_out_write_pkg;
   
-     ---------------------------------------------------------------------
+  ---------------------------------------------------------------------
   -- PBS controller logic
   ---------------------------------------------------------------------
   
   type pbs_ctrl_state_t is (
-  PBS_IDLE,
-  PBS_RUN,
-  PBS_DRAIN,
-  PBS_DONE
+  IDLE,
+  RUN,
+  DRAIN,
+  DONE
   );
-  
+
+  signal led_cnt    : unsigned(23 downto 0) := (others => '0');
+  signal led_shift : std_logic_vector(6 downto 0) := "0000001";
 
   signal start_pbs_d : std_ulogic := '0';
   signal start_pbs_pulse : std_ulogic;
-  signal pbs_state : pbs_ctrl_state_t := PBS_IDLE;
+  signal pbs_state : pbs_ctrl_state_t := IDLE;
   signal pbs_enable : std_ulogic := '0';
-
 
 begin
 
@@ -280,6 +288,10 @@ begin
   -- PBS controller logic
   ---------------------------------------------------------------------
 
+  -- PBS status outputs
+  pbs_busy <= '1' when (pbs_state = RUN or pbs_state = DRAIN) else '0';
+  pbs_done <= '1' when (pbs_state = DONE) else '0';
+
 
   process(i_clk)
   begin
@@ -296,46 +308,110 @@ begin
   begin
     if rising_edge(i_clk) then
       if i_reset_n = '0' then
-        pbs_state  <= PBS_IDLE;
-        pbs_enable <= '0';
+        --------------------------------------------------
+        -- Reset
+        --------------------------------------------------
+        pbs_state   <= IDLE;
+        pbs_enable  <= '0';
+        pbs_busy    <= '0';
+        pbs_done    <= '0';
+
+        led_cnt     <= (others => '0');
+        led_shift   <= "0000001";
+        user_led    <= (others => '0');
 
       else
+        --------------------------------------------------
+        -- Default registered behavior
+        --------------------------------------------------
+        led_cnt <= led_cnt + 1;
+
         case pbs_state is
 
           ------------------------------------------------
-          when PBS_IDLE =>
+          -- IDLE
+          ------------------------------------------------
+          when IDLE =>
             pbs_enable <= '0';
+            pbs_busy   <= '0';
+            pbs_done   <= '0';
+
+            -- LED: slow heartbeat on LED0
+            if led_cnt(23) = '1' then
+              user_led <= "00000001";
+            else
+              user_led <= "00000000";
+            end if;
+
             if start_pbs_pulse = '1' then
-              pbs_state  <= PBS_RUN;
+              pbs_state  <= RUN;
               pbs_enable <= '1';
+
+              -- reset LED animation on start
+              led_cnt   <= (others => '0');
+              led_shift <= "0000001";
             end if;
 
           ------------------------------------------------
-          when PBS_RUN =>
-            -- PBS actively producing data
+          -- RUN
+          ------------------------------------------------
+          when RUN =>
+            pbs_busy <= '1';
+            pbs_done <= '0';
+
+            -- LED: rotating pattern
+            if led_cnt = 0 then
+              led_shift <= led_shift(5 downto 0) & led_shift(6);
+            end if;
+            user_led <= '0' & led_shift;
+
             if pbs_next_module_reset_s = '1' then
-              pbs_state <= PBS_DRAIN;
+              pbs_state <= DRAIN;
             end if;
 
           ------------------------------------------------
-          when PBS_DRAIN =>
-            -- allow AXI writes to finish
+          -- DRAIN
+          ------------------------------------------------
+          when DRAIN =>
+            pbs_busy <= '1';
+            pbs_done <= '0';
+
+            -- same rotating pattern
+            if led_cnt = 0 then
+              led_shift <= led_shift(5 downto 0) & led_shift(6);
+            end if;
+            user_led <= '0' & led_shift;
+
             if hbm_write_in_s.awvalid = '0' and
               hbm_write_in_s.wvalid  = '0' then
-              pbs_state <= PBS_DONE;
+              pbs_state <= DONE;
             end if;
 
           ------------------------------------------------
-          when PBS_DONE =>
+          -- DONE
+          ------------------------------------------------
+          when DONE =>
             pbs_enable <= '0';
+            pbs_busy   <= '0';
+            pbs_done   <= '1';
+
+            -- LED: all ON (7 LEDs)
+            user_led <= "01111111";
+
             if start_pbs = '0' then
-              pbs_state <= PBS_IDLE;
+              pbs_state <= IDLE;
+              pbs_done  <= '0';
+
+              -- reset LEDs for next run
+              led_cnt   <= (others => '0');
+              led_shift <= "0000001";
             end if;
 
         end case;
       end if;
     end if;
   end process;
+
 -----------------------------------------------------
 
 
