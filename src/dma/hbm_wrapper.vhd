@@ -6,6 +6,15 @@ library work;
 use work.ip_cores_constants.all;
 use work.processor_utils.all;
 
+--                  ┌───────────────┐
+-- AXI from BD ───> │               │
+--                  │   AXI MUX     ├──> hbm_0
+-- Packages ──────> │               │
+--                  └──────^────────┘
+--                         │
+--                     i_axi_sel
+
+
 entity hbm_wrapper_hbm is
   port (
 

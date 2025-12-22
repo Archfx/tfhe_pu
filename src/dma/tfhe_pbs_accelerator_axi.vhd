@@ -160,10 +160,11 @@ architecture rtl of tfhe_pbs_accelerator_axi is
 
   signal temp_delay    : unsigned(23 downto 0) := (others => '0');
 
-  signal start_pbs_d : std_ulogic := '0';
-  signal start_pbs_pulse : std_ulogic;
   signal pbs_state : pbs_ctrl_state_t := IDLE;
-  signal pbs_enable : std_ulogic := '0';
+   
+  -- signal start_pbs_d : std_ulogic := '0';
+  -- signal start_pbs_pulse : std_ulogic;
+  -- signal pbs_enable : std_ulogic := '0';
 
 begin
 
@@ -177,8 +178,8 @@ begin
   M_AXI_ARLEN   <= axi_arlen;
 
   
-  M_AXI_ARVALID <= axi_arvalid when pbs_enable = '1' else '0';
-  M_AXI_RREADY  <= axi_rready  when pbs_enable = '1' else '0';
+  M_AXI_ARVALID <= axi_arvalid when start_pbs = '1' else '0';
+  M_AXI_RREADY  <= axi_rready  when start_pbs = '1' else '0';
 
   -- WRITE side: constant settings
   M_AXI_AWSIZE  <= std_logic_vector(hbm_burstsize);
@@ -190,7 +191,7 @@ begin
   u_pbs_accel : entity work.tfhe_pbs_accelerator
     port map (
       i_clk               => i_clk,
-      i_reset_n           => i_reset_n and pbs_enable, -- gated reset for now, better to do internal FSM
+      i_reset_n           => i_reset_n and start_pbs, -- gated reset for now, better to do internal FSM
       i_ram_coeff_idx     => ram_coeff_idx_s,
       o_return_address    => pbs_return_addr_s,
       o_out_valid         => pbs_out_valid_s,
@@ -297,18 +298,18 @@ begin
   pbs_done <= '1' when (pbs_state = IDLE) else '0';
 
 
-  -- Rising edge detector for the start_pbs signal
-  -- Captures the previous state of start_pbs on each clock cycle
-  -- Generates a single-cycle pulse when start_pbs transitions from low to high
-  -- Used to create a synchronous, one-shot trigger for PBS accelerator initiation
-  process(i_clk)
-  begin
-    if rising_edge(i_clk) then
-      start_pbs_d <= start_pbs;
-    end if;
-  end process;
+  -- -- Rising edge detector for the start_pbs signal
+  -- -- Captures the previous state of start_pbs on each clock cycle
+  -- -- Generates a single-cycle pulse when start_pbs transitions from low to high
+  -- -- Used to create a synchronous, one-shot trigger for PBS accelerator initiation
+  -- process(i_clk)
+  -- begin
+  --   if rising_edge(i_clk) then
+  --     start_pbs_d <= start_pbs;
+  --   end if;
+  -- end process;
 
-  start_pbs_pulse <= start_pbs and not start_pbs_d;
+  -- start_pbs_pulse <= start_pbs and not start_pbs_d;
 
 
 
@@ -320,9 +321,8 @@ begin
         -- Reset
         --------------------------------------------------
         pbs_state   <= IDLE;
-        pbs_enable  <= '0';
         pbs_busy    <= '0';
-        pbs_done    <= '0';
+        pbs_done    <= '1';
 
         led_cnt     <= (others => '0');
         led_shift   <= "0000001";
@@ -340,74 +340,70 @@ begin
           -- IDLE
           ------------------------------------------------
           when IDLE =>
-            pbs_enable <= '0';
-            pbs_busy   <= '0';
-            pbs_done   <= '0';
-
+           
             -- LED: slow heartbeat on LED0
             if led_cnt(23) = '1' then
-              user_led <= "00000001";
+              user_led <= "10000001";
             else
               user_led <= "00000000";
             end if;
 
-            if start_pbs_pulse = '1' then
+            if start_pbs = '1' then
               pbs_state  <= RUN;
-              pbs_enable <= '1';
 
               -- reset LED animation on start
               led_cnt   <= (others => '0');
-              led_shift <= "0000001";
+              led_shift <= "1111111";
+              pbs_busy <= '1';
+              pbs_done <= '0';
             end if;
 
           ------------------------------------------------
           -- RUN
           ------------------------------------------------
           when RUN =>
-            pbs_busy <= '1';
-            pbs_done <= '0';
-
-            -- LED: rotating pattern
-            if led_cnt = 0 then
-              led_shift <= led_shift(5 downto 0) & led_shift(6);
+  
+            -- LED: pattern
+            if led_cnt(23) = '1' then
+              user_led <= "01010101";
+            else
+              user_led <= "10101010";
             end if;
-            user_led <= '0' & led_shift;
 
             -- if pbs_next_module_reset_s = '1' then
             --   pbs_state <= DRAIN;
             -- end if;
 
-            temp_delay <= temp_delay + 1;
             if temp_delay = x"FFFFFF" then
-              pbs_state <= DRAIN;
               temp_delay <= (others => '0');
+              pbs_state  <= DRAIN;
+              pbs_busy <= '1';
+              pbs_done <= '0';
+            else
+              temp_delay <= temp_delay + 1;
             end if;
 
           ------------------------------------------------
           -- DRAIN
           ------------------------------------------------
           when DRAIN =>
-            pbs_busy <= '1';
-            pbs_done <= '0';
+            
 
 
-            if led_cnt(21 downto 0) = 0 then
-              led_cnt_bin <= led_cnt_bin + 1;
-            end if;
-
-            user_led <= std_logic_vector(led_cnt_bin) & '0';
+            user_led <= "01111111";
 
             -- if hbm_write_in_s.awvalid = '0' and
             --   hbm_write_in_s.wvalid  = '0' then
             --   pbs_state <= DONE;
             -- end if;
-            temp_delay <= temp_delay + 1;
+            
             if temp_delay = x"FFFFFF" then
               pbs_state <= IDLE;
-              pbs_enable <= '0';
               pbs_busy   <= '0';
               pbs_done   <= '1';
               temp_delay <= (others => '0');
+            else
+              temp_delay <= temp_delay + 1;
             end if;
 
           ------------------------------------------------
