@@ -773,6 +773,8 @@
 		input  wire                         AXI_14_ACLK,
 		input  wire                         AXI_15_ACLK,
 
+		input  wire                         ARESET_N,
+
 		// input  wire                         AXI_00_ARESET_N,
 		// input  wire                         AXI_01_ARESET_N,
 		// input  wire                         AXI_02_ARESET_N,
@@ -891,11 +893,8 @@
 		// --------------------------------------------------
 		// Global signals
 		// --------------------------------------------------
-		.i_clk                     (i_clk),
-		.i_clk_ref                 (i_clk_ref),
-		.i_clk_apb                 (i_clk_apb),
-		.i_reset_n                 (i_reset_n),
-		.i_reset_n_apb             (i_reset_n_apb),
+		.RESET_N                 (RESET_N),
+
 
 		// --------------------------------------------------
 		// High-throughput TFHE interface
