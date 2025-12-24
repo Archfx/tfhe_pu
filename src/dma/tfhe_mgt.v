@@ -1,7 +1,7 @@
 // ============================================================
 // Engine FSM (consumes level start exactly once per assertion)
 // ============================================================
-module tfhe_pu #
+module tfhe_mgt #
 (
     parameter integer C_S_AXI_DATA_WIDTH = 32
 )

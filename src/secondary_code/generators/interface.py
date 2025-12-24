@@ -1,4 +1,4 @@
-def print_axi_ports(start=0, end=15):
+def print_axi_ports(start=0, end=31):
     template = """
         // --------------------------------------------------
         // AXI_{i:02d}
@@ -44,4 +44,4 @@ def print_axi_ports(start=0, end=15):
 
 
 if __name__ == "__main__":
-    print_axi_ports(0, 15)
+    print_axi_ports(0, 31)
