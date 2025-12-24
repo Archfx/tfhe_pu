@@ -152,5 +152,5 @@ set_property PACKAGE_PIN BG28 [get_ports {leds[7]}]
 
 ## Debug
 
-connect_debug_port dbg_hub/clk \
-  [get_nets u_bd/xdma_hbm_i/clk_wiz_clk_out1]
+# connect_debug_port dbg_hub/clk \
+#   [get_nets u_bd/xdma_hbm_i/clk_wiz_clk_out1]

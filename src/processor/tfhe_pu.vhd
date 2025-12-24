@@ -15,7 +15,7 @@ library work;
 -- 			Packages ──────> │               │
 -- 			                 └──────^────────┘
 -- 			                        │
--- 			                    i_axi_sel
+-- 			                    i_axi_sel[0]
 
 -- 			                 ┌───────────────┐
 -- AXI 16 to 31 from BD ───> │               │
@@ -23,7 +23,7 @@ library work;
 -- 			Packages ──────> │               │
 -- 			                 └──────^────────┘
 -- 			                        │
--- 			                    i_axi_sel
+-- 			                    i_axi_sel[1]
 
 
 entity tfhe_pu is
@@ -1398,7 +1398,7 @@ begin
 			-- --------------------------------------------------
 			-- AXI select
 			-- --------------------------------------------------
-			i_axi_sel            => '0',  -- Only HBM-AXI4 for now
+			i_axi_sel            => i_axi_sel(0),  -- Only HBM-AXI4 for now
 
 			-- --------------------------------------------------
 			-- High-throughput TFHE interface
@@ -2108,7 +2108,7 @@ begin
 			-- --------------------------------------------------
 			-- AXI select
 			-- --------------------------------------------------
-			i_axi_sel            => '0',  -- Only HBM-AXI4 for now
+			i_axi_sel            => i_axi_sel(1),  -- Only HBM-AXI4 for now
 
 			-- --------------------------------------------------
 			-- High-throughput TFHE interface
