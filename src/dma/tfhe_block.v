@@ -898,12 +898,12 @@
 
 		// --------------------------------------------------
 		// High-throughput TFHE interface
-		// --------------------------------------------------
-		.i_write_pkgs              (i_write_pkgs),
-		.i_read_pkgs               (i_read_pkgs),
-		.o_write_pkgs              (o_write_pkgs),
-		.o_read_pkgs               (o_read_pkgs),
-		.o_initial_init_ready      (o_initial_init_ready),
+		// // --------------------------------------------------
+		// .i_write_pkgs              (i_write_pkgs),
+		// .i_read_pkgs               (i_read_pkgs),
+		// .o_write_pkgs              (o_write_pkgs),
+		// .o_read_pkgs               (o_read_pkgs),
+		// .o_initial_init_ready      (o_initial_init_ready),
 
 		// --------------------------------------------------
 		// External AXI master – common
