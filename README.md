@@ -1,5 +1,5 @@
 
-# Open-Source TFHE Accelerator
+# Open-Source TFHE Accelerator (tfhe-PU)
 
 <img align="right" width="400" height="auto" alt="" src="images/tfhe-proc.png"/> This repository accompanies the paper [**“Towards a Functionally Complete and Parameterizable TFHE Processor”**]().  
 The design is written in a mix of **VHDL** and **SystemVerilog**, compatible with **Vivado 2024.1**.
@@ -7,17 +7,50 @@ This is a fully fledged, parameterizable TFHE processor that connects via PCIe, 
 
 All content is for **academic research only**, provided *as is* without warranty.
 
----
+
 
 ## Repository Structure
 
-- **core_logic/** – NTT and TFHE arithmetic modules  
-- **tfhe/** – TFHE-specific components (PBS, key switching, etc.)  
-- **processor/** – Top-level processor modules  
-- **testbenches/** – Simulation testbenches for verification  
-- **ntt_param_computation.ipynb** – Jupyter notebook to generate roots of unity and constants for custom primes  
+- **README.md** – Project documentation and setup instructions
+- **host/** – Host-side software, including control scripts and drivers for PCIe communication
+- **driver/** – DMA IP drivers (submodule from Xilinx)
+- **images/** – Diagrams and images used in documentation
+- **src/** – Main source code directory
+  - **ntt_param_computation.ipynb** – Jupyter notebook to generate roots of unity and constants for custom primes
+  - **core_logic/** – NTT and TFHE arithmetic modules
+  - **tfhe/** – TFHE-specific components (PBS, key switching, etc.)
+  - **processor/** – Top-level processor modules
+  - **testbenches/** – Simulation testbenches for verification
+  - **dma/** – DMA and memory management modules
+  - **secondary_code/** – Additional utilities and constraints
+- **vcu_128_xdc/** – FPGA constraints for VCU128 board
 
----
+
+
+## Setup Your Own tfhe-PU
+
+Clone this repositoty and initialize the sub-modules.
+
+```sh
+git clone https://github.com/Archfx/tfhe_pu
+git submodule update --init #initilize the Xilinx dma drivers repo
+```
+
+Use Vivado with an appropriate license (specifically for HBM-supported FPGAs such as VCU128).
+
+1. Create a new project for your FPGA and import all the Verilog/SystemVerilog/VHDL modules inside the `src` folder except the modules within `testbenches`, `secondary_code`, and `deprecated` folders.
+2. Add two HBM IPs (left and right stacks) from the Vivado IP catalog and configure them with the following settings:
+   - Remove the option for external `apb interface`.
+   - Disable debug interface and error correction options.
+3. Import the `tfhe_pu_bd` block diagram by running the following command in the TCL console:
+   ```
+   source src/processor/tfhe_pu_bd.tcl
+   ```
+4. Set `tfhe_pu_top` as the top module.
+5. Synthesize, implement, generate the bitstream, and program the FPGA.
+6. Follow the instructions in the README in the `host` folder for the host-side setup.
+7. Enjoy the accelerated TFHE!
+
 
 ## NTT Overview
 
@@ -49,37 +82,41 @@ Defined in `ntt_configuration.vhd` and `constants_utils.vhd`:
 Use `ntt_param_computation.ipynb` to generate new constants, then update `ntt_params` accordingly.  
 If changing bit widths or primes, define a matching reduction in `modulo_specific/` and verify correctness via simulation (`new_ntt_tb.vhd`).
 
----
+
 
 ## TFHE Processor
 
 The repository implements major TFHE modules, including **programmable bootstrapping** and **key switching**, built upon the NTT engine.  
 To use them, include all VHDL files from `core_logic/`, `tfhe/`, and `processor/`.
 
-For details on architecture and performance, see the [paper]().
+For details on architecture and performance, see the [paper](https://arxiv.org/abs/2510.23483).
 
----
 
 ## Measurements
 
 When evaluating frequency or resource usage, review Vivado implementation warnings — especially for Karatsuba multipliers and mid-stage optimizations in the negacyclic NTT.
 
----
 
-## Setup the Env
-
-```sh
-git clone https://github.com/Archfx/tfhe_pu
-git submodule update --init #initilize the Xilinx dma drivers repo
-```
 ## Contributing
 
 We welcome contributions that improve performance, clarity, or modularity.  
 Please avoid hardcoded constants to maintain flexibility across parameter sets.
 
----
+
 
 ## Citation
+
+```tex
+@misc{häusler2025functionally,
+      title={Towards a Functionally Complete and Parameterizable TFHE Processor}, 
+      author={Valentin Reyes Häusler and Gabriel Ott and Aruna Jayasena and Andreas Peter},
+      year={2025},
+      eprint={2510.23483},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/2510.23483}, 
+}
+```
 
 # License
 This project is licensed under MIT.
