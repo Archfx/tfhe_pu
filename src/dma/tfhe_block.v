@@ -1488,34 +1488,10 @@
 	.pbs_done     (pbs_done), //from the TFHE processor
 	.start_pbs    (start_pbs), //from the controller
 	.tfhe_reset_n (TFHE_RESET_N),
-	.hbm_select   (hbm_select) //from the controller
+	.hbm_select   (hbm_select), //from the controller
+	.user_led(user_led)
 	);
 
-
-
-//// Instantiation of Axi Bus Interface M00_AXI
-	tfhe_mgt # ( 
-		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH)
-	) tfhe_mgt_inst (
-		.clk(s00_axi_aclk),
-		.reset_n(s00_axi_aresetn),
-		
-		.user_led(user_led),
-
-		// --------------------------------------------------
-		// Controller to TFHE processor interface
-		// --------------------------------------------------
-		.host_wr_addr (host_wr_addr), // from the host
-		.host_wr_len  (host_wr_len), // from the host
-		.host_rd_addr (host_rd_addr), // from TFHE processor
-		.host_rd_len  (host_rd_len),  // from TFHE processor
-
-		.pbs_busy     (pbs_busy), //from the TFHE processor
-		.pbs_done     (pbs_done), //from the TFHE processor
-		.start_pbs    (start_pbs) //from the controller
-		
-
-	);
 
 	tfhe_pu u_tfhe_pu_int (
 		// --------------------------------------------------
