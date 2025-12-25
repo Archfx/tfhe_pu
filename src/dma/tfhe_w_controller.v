@@ -21,7 +21,13 @@ module tfhe_w_controller #
   output wire [C_S_AXI_DATA_WIDTH-1:0] host_wr_addr,
   output wire [C_S_AXI_DATA_WIDTH-1:0] host_wr_len,
   output wire                          start_pbs,
+  output wire                          tfhe_reset_n,
   output wire [1:0]                    hbm_select,
+
+  // --------------------------------------------------
+  // User LED output
+  // --------------------------------------------------
+  output  [7:0]                    user_led,
 
   // --------------------------------------------------
   // AXI4-Lite interface
@@ -83,12 +89,12 @@ module tfhe_w_controller #
   reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg3;
   reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg4;
   reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg5;
+  
+  reg start_pbs_d;
+  reg o_reset_n;
 
   integer byte_index;
 
-  // LED logic
-  reg [31:0] led_cnt;
-  reg [7:0]  led_shift;
 
   // Assign AXI outputs
   assign S_AXI_AWREADY = axi_awready;
@@ -248,35 +254,68 @@ module tfhe_w_controller #
   assign start_pbs    = slv_reg0[0];
   assign hbm_select   = slv_reg0[2:1];
 
+  assign tfhe_reset_n  = o_reset_n;
 
-  // // ---------------- USER LED LOGIC (unchanged) ----------------
-  // always @(posedge S_AXI_ACLK) begin
-  //   if (!S_AXI_ARESETN) begin
-  //     led_cnt   <= 32'd0;
-  //     led_shift <= 8'b0000_0001;
-  //     user_led  <= 8'b0000_0000;
-  //   end else begin
-  //     led_cnt <= led_cnt + 1;
+  // start_pbs edge detect and tfhe_reset_n logic
+  always @(posedge S_AXI_ACLK) begin
+      if (!S_AXI_ARESETN) begin
+          start_pbs_d <= 1'b0;
+          o_reset_n   <= 1'b0;
+      end else begin
+          start_pbs_d <= start_pbs;
 
-  //     if (led_cnt >= (slv_reg1 != 32'd0 ? slv_reg1 : 32'd25_000_000)) begin
-  //       led_cnt <= 32'd0;
-  //       case (slv_reg0[2:0])
-  //         3'b000: user_led <= 8'b0000_0000;
-  //         3'b001: user_led <= 8'b1111_1111;
-  //         3'b010: begin
-  //           led_shift <= (led_shift == 8'b1000_0000) ? 8'b0000_0001 : (led_shift << 1);
-  //           user_led  <= led_shift;
-  //         end
-  //         3'b011: begin
-  //           led_shift <= (led_shift == 8'b0000_0001) ? 8'b1000_0000 : (led_shift >> 1);
-  //           user_led  <= led_shift;
-  //         end
-  //         3'b100: user_led <= ~user_led;
-  //         3'b101: user_led <= {slv_reg2[3:0], slv_reg2[3:0]};
-  //         default: user_led <= slv_reg3[7:0];
-  //       endcase
-  //     end
-  //   end
-  // end
+          // rising edge detect
+          if (!start_pbs_d && start_pbs)
+              o_reset_n <= 1'b1;
+          else if (!start_pbs)
+              o_reset_n <= 1'b0;
+      end
+  end
+
+
+  // LED logic
+  reg  [2:0]  led;
+  assign user_led[7] = start_pbs;
+  assign user_led[6] = pbs_busy;
+  assign user_led[5] = pbs_done;
+  assign user_led[4:3] = hbm_select;
+  assign user_led[2:0] = led;
+
+  reg [23:0] led_cnt;
+  reg [2:0]  seq_led;
+
+  /* free-running counter */
+  always @(posedge clk or negedge S_AXI_ARESETN) begin
+    if (!S_AXI_ARESETN)
+      led_cnt <= 24'd0;
+    else
+      led_cnt <= led_cnt + 1'b1;
+  end
+
+  /* LED pattern logic */
+  always @(posedge clk or negedge S_AXI_ARESETN) begin
+    if (!S_AXI_ARESETN) begin
+      led     <= 3'b000;
+      seq_led <= 3'b001;
+    end else begin
+
+      /* Highest priority: PBS done -> all ON */
+      if (pbs_done) begin
+        led <= 3'b111;
+
+      /* start_pbs active -> sequential pattern */
+      end else if (start_pbs) begin
+        if (led_cnt[23]) begin
+          seq_led <= {seq_led[1:0], seq_led[2]};  // rotate left
+          led     <= seq_led;
+        end
+
+      /* Idle -> heartbeat blink */
+      end else begin
+        led <= {3{led_cnt[23]}};  // all blink together
+      end
+    end
+  end
+
 
 endmodule

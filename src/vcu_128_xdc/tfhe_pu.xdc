@@ -107,9 +107,9 @@ set_false_path -to [get_pins -hier *sync_reg[0]/D]
 
 #---------------------- Adding waiver for exdes level constraints --------------------------------#
 
-create_waiver -type DRC -id {REQP-1839} -tags "1166691" -scope -internal -user "xdma" -desc "DRC expects synchronous pins to be provided to BRAM inputs. Since synchronization is present one stage before, it is safe to ignore" -objects [list [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_xdma_inst/U0/inst_blk_mem_gen/*.ram}}] [get_cells -hierarchical -filter {NAME =~ {*/AXI_BRAM_CTL/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*xdma_inst/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*axi_bram_gen_bypass_inst/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_axiLM_inst/U0/inst_blk_mem_gen/*.ram}}] [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_gen_bypass_inst/U0/inst_blk_mem_gen/*.ram}}]]
+# create_waiver -type DRC -id {REQP-1839} -tags "1166691" -scope -internal -user "xdma" -desc "DRC expects synchronous pins to be provided to BRAM inputs. Since synchronization is present one stage before, it is safe to ignore" -objects [list [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_xdma_inst/U0/inst_blk_mem_gen/*.ram}}] [get_cells -hierarchical -filter {NAME =~ {*/AXI_BRAM_CTL/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*xdma_inst/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*axi_bram_gen_bypass_inst/U0/gint_inst*.mem_reg*} && PRIMITIVE_TYPE =~ {*BRAM*}}] [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_axiLM_inst/U0/inst_blk_mem_gen/*.ram}}] [get_cells -hierarchical -filter {NAME =~ {*/blk_mem_gen_bypass_inst/U0/inst_blk_mem_gen/*.ram}}]]
 
-create_waiver -type CDC -id {CDC-1} -tags "1165825" -scope -internal -user "xdma" -desc "PCIe reset path -Safe to waive" -from [get_ports sys_rst_n] -to [get_pins -hier -filter {NAME =~ {*/user_clk_heartbeat_reg[*]/R}}]
+# create_waiver -type CDC -id {CDC-1} -tags "1165825" -scope -internal -user "xdma" -desc "PCIe reset path -Safe to waive" -from [get_ports sys_rst_n] -to [get_pins -hier -filter {NAME =~ {*/user_clk_heartbeat_reg[*]/R}}]
 
 
 ## CLK
