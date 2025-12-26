@@ -17,15 +17,16 @@ Control / Status Register (slv_reg0) — 32 bits
 +----+----+----+----+----+----+----+----+----+----+----+-----+
 ```
 ### Control and Status
-Bit 0  : START  - Start PBS operation (write 1 to trigger)
-Bit 1  : BUSY   - PBS engine is busy (read-only)
-Bit 2  : DONE   - PBS operation completed (sticky, cleared on START)
-Bit 3  : RS     - Reserved
+- Bit 0  : START  - Start PBS operation (write 1 to trigger)
+- Bit 1  : BUSY   - PBS engine is busy (read-only)
+- Bit 2  : DONE   - PBS operation completed (sticky, cleared on START)
+- Bit 3  : RS     - Reserved
 
-### Write/ Reas select for TFHE processor (defaults to HOST)
-Bit 4  : WR0    - HBM write select, TFHE_PU vs Host (Stack 0)
-Bit 5  : RD0    - HBM read  select, TFHE_PU vs Host (Stack 0)
-Bit 6  : WR1    - HBM write select, TFHE_PU vs Host (Stack 1)
-Bit 7  : RD1    - HBM read  select, TFHE_PU vs Host (Stack 1)
+### Write/ Read select for HBM <--> TFHE processor (defaults to HOST)
+- Bit 4  : WR0    - HBM write select, TFHE_PU if `1` vs Host if `0` (Stack 0)
+- Bit 5  : RD0    - HBM read  select, TFHE_PU if `1` vs Host if `0` (Stack 0)
+- Bit 6  : WR1    - HBM write select, TFHE_PU if `1` vs Host if `0` (Stack 1)
+- Bit 7  : RD1    - HBM read  select, TFHE_PU if `1` vs Host if `0` (Stack 1)
 
-Bits 31:8 : Reserved (must be written as 0)
+### Reserved for future use
+- Bits 31:8 : Reserved (must be written as 0)
