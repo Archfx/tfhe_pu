@@ -1219,6 +1219,8 @@ begin
 			AXI_01_BVALID      => hbm_01_bvalid,
 
 			-- ---- AXI_02 ----
+			AXI_02_ACLK       => AXI_02_ACLK,
+			AXI_02_ARESET_N    => AXI_02_ARESET_N,
 			AXI_02_ARADDR      => hbm_02_araddr,
 			AXI_02_ARBURST     => hbm_02_arburst,
 			AXI_02_ARID        => hbm_02_arid,
