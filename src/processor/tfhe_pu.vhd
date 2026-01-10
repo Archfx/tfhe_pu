@@ -1457,7 +1457,7 @@ begin
 			o_read_pkgs          => hbm_read_out_pkgs_stack_0,
 			o_initial_init_ready => o_initial_init_ready,
 
-			TFHE_CLK             => AXI_00_ACLK, -- TFHE_CLK,
+			-- TFHE_CLK             => TFHE_CLK,
 
 			-- --------------------------------------------------
 			-- External AXI master – common
@@ -2167,7 +2167,7 @@ begin
 			o_read_pkgs          => hbm_read_out_pkgs_stack_1,
 			o_initial_init_ready => o_initial_init_ready,
 
-			TFHE_CLK             => AXI_00_ACLK,--TFHE_CLK,
+			-- TFHE_CLK             => AXI_00_ACLK,--TFHE_CLK,
 
 			-- --------------------------------------------------
 			-- External AXI master – common

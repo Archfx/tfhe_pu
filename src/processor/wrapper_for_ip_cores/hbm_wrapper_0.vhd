@@ -25,7 +25,7 @@ entity hbm_w_0 is
     HBM_RW_SELECT     : in  std_logic_vector(1 downto 0);
 
     --- Global signals
-	TFHE_CLK	   : in  std_logic;
+	-- TFHE_CLK	   : in  std_logic;
 
 
 
