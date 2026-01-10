@@ -1,0 +1,386 @@
+<spirit:memoryMaps>
+    <spirit:memoryMap>
+      <spirit:name>AXI_00</spirit:name>
+      <spirit:displayName>AXI_00</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_00</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x0</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_01</spirit:name>
+      <spirit:displayName>AXI_01</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_01</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x10000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_02</spirit:name>
+      <spirit:displayName>AXI_02</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_02</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x20000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_03</spirit:name>
+      <spirit:displayName>AXI_03</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_03</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x30000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_04</spirit:name>
+      <spirit:displayName>AXI_04</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_04</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x40000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_05</spirit:name>
+      <spirit:displayName>AXI_05</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_05</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x50000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_06</spirit:name>
+      <spirit:displayName>AXI_06</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_06</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x60000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_07</spirit:name>
+      <spirit:displayName>AXI_07</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_07</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x70000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_08</spirit:name>
+      <spirit:displayName>AXI_08</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_08</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x80000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_09</spirit:name>
+      <spirit:displayName>AXI_09</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_09</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x90000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_10</spirit:name>
+      <spirit:displayName>AXI_10</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_10</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xA0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_11</spirit:name>
+      <spirit:displayName>AXI_11</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_11</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xB0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_12</spirit:name>
+      <spirit:displayName>AXI_12</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_12</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xC0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_13</spirit:name>
+      <spirit:displayName>AXI_13</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_13</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xD0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_14</spirit:name>
+      <spirit:displayName>AXI_14</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_14</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xE0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_15</spirit:name>
+      <spirit:displayName>AXI_15</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_15</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0xF0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_16</spirit:name>
+      <spirit:displayName>AXI_16</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_16</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x100000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_17</spirit:name>
+      <spirit:displayName>AXI_17</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_17</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x110000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_18</spirit:name>
+      <spirit:displayName>AXI_18</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_18</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x120000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_19</spirit:name>
+      <spirit:displayName>AXI_19</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_19</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x130000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_20</spirit:name>
+      <spirit:displayName>AXI_20</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_20</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x140000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_21</spirit:name>
+      <spirit:displayName>AXI_21</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_21</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x150000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_22</spirit:name>
+      <spirit:displayName>AXI_22</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_22</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x160000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_23</spirit:name>
+      <spirit:displayName>AXI_23</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_23</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x170000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_24</spirit:name>
+      <spirit:displayName>AXI_24</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_24</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x180000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_25</spirit:name>
+      <spirit:displayName>AXI_25</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_25</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x190000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_26</spirit:name>
+      <spirit:displayName>AXI_26</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_26</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1A0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_27</spirit:name>
+      <spirit:displayName>AXI_27</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_27</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1B0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_28</spirit:name>
+      <spirit:displayName>AXI_28</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_28</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1C0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_29</spirit:name>
+      <spirit:displayName>AXI_29</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_29</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1D0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_30</spirit:name>
+      <spirit:displayName>AXI_30</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_30</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1E0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+    <spirit:memoryMap>
+      <spirit:name>AXI_31</spirit:name>
+      <spirit:displayName>AXI_31</spirit:displayName>
+      <spirit:addressBlock>
+        <spirit:name>HBM_MEM_31</spirit:name>
+        <spirit:displayName>memory</spirit:displayName>
+        <spirit:baseAddress spirit:format="bitString" spirit:bitStringLength="1">0x1F0000000</spirit:baseAddress>
+        <spirit:range spirit:format="long" spirit:minimum="4096" spirit:rangeType="long">268435456</spirit:range>
+        <spirit:width spirit:format="long">256</spirit:width>
+        <spirit:usage>memory</spirit:usage>
+      </spirit:addressBlock>
+    </spirit:memoryMap>
+</spirit:memoryMaps>

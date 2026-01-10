@@ -1,6 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
+(* CORE_GENERATION_INFO = "tfhe_block,hbm_v1_0_17,{x_ipProduct=Vivado 2025.1,x_ipVendor=xilinx.com,x_ipLibrary=ip,x_ipName=hbm,x_ipVersion=1.0,x_ipCoreRevision=17,x_ipLanguage=VERILOG,x_ipSimLanguage=MIXED,HBM_STACK=1,SWITCH_ENABLE_00=FALSE,SWITCH_ENABLE_01=FALSE,INIT_BYPASS=FALSE,INIT_SEQ_TIMEOUT=10000000,AXI_RST_ASSERT_WIDTH=16,AXI_RST_DEASSERT_WIDTH=2,TEMP_WAIT_PERIOD_0=100000,TEMP_WAIT_PERIOD_1=100000,SWITCH_EN_0=0,SWITCH_EN_1=0,AXI_CLK_FREQ=450,AXI_CLK1_FREQ=450,HBM_REF_CLK_FREQ_0=100,HBM_REF_CLK_FREQ_1=100,HBM_CLK_FREQ_0=500,HBM_CLK_FREQ_1=900,HBM_STACK_NUM=1,CLK_SEL_00=FALSE,CLK_SEL_01=FALSE,CLK_SEL_02=FALSE,CLK_SEL_03=FALSE,CLK_SEL_04=FALSE,CLK_SEL_05=FALSE,CLK_SEL_06=FALSE,CLK_SEL_07=TRUE,CLK_SEL_08=FALSE,CLK_SEL_09=FALSE,CLK_SEL_10=FALSE,CLK_SEL_11=FALSE,CLK_SEL_12=FALSE,CLK_SEL_13=FALSE,CLK_SEL_14=FALSE,CLK_SEL_15=FALSE,CLK_SEL_16=FALSE,CLK_SEL_17=FALSE,CLK_SEL_18=FALSE,CLK_SEL_19=FALSE,CLK_SEL_20=FALSE,CLK_SEL_21=FALSE,CLK_SEL_22=FALSE,CLK_SEL_23=FALSE,CLK_SEL_24=FALSE,CLK_SEL_25=FALSE,CLK_SEL_26=FALSE,CLK_SEL_27=FALSE,CLK_SEL_28=FALSE,CLK_SEL_29=FALSE,CLK_SEL_30=FALSE,CLK_SEL_31=FALSE,DATARATE_STACK_0=1000,DATARATE_STACK_1=1800,READ_PERCENT_00=40,READ_PERCENT_01=40,READ_PERCENT_02=40,READ_PERCENT_03=40,READ_PERCENT_04=40,READ_PERCENT_05=40,READ_PERCENT_06=40,READ_PERCENT_07=40,READ_PERCENT_08=40,READ_PERCENT_09=40,READ_PERCENT_10=40,READ_PERCENT_11=40,READ_PERCENT_12=40,READ_PERCENT_13=40,READ_PERCENT_14=40,READ_PERCENT_15=40,READ_PERCENT_16=40,READ_PERCENT_17=40,READ_PERCENT_18=40,READ_PERCENT_19=40,READ_PERCENT_20=40,READ_PERCENT_21=40,READ_PERCENT_22=40,READ_PERCENT_23=40,READ_PERCENT_24=40,READ_PERCENT_25=40,READ_PERCENT_26=40,READ_PERCENT_27=40,READ_PERCENT_28=40,READ_PERCENT_29=40,READ_PERCENT_30=40,READ_PERCENT_31=40,WRITE_PERCENT_00=40,WRITE_PERCENT_01=40,WRITE_PERCENT_02=40,WRITE_PERCENT_03=40,WRITE_PERCENT_04=40,WRITE_PERCENT_05=40,WRITE_PERCENT_06=40,WRITE_PERCENT_07=40,WRITE_PERCENT_08=40,WRITE_PERCENT_09=40,WRITE_PERCENT_10=40,WRITE_PERCENT_11=40,WRITE_PERCENT_12=40,WRITE_PERCENT_13=40,WRITE_PERCENT_14=40,WRITE_PERCENT_15=40,WRITE_PERCENT_16=40,WRITE_PERCENT_17=40,WRITE_PERCENT_18=40,WRITE_PERCENT_19=40,WRITE_PERCENT_20=40,WRITE_PERCENT_21=40,WRITE_PERCENT_22=40,WRITE_PERCENT_23=40,WRITE_PERCENT_24=40,WRITE_PERCENT_25=40,WRITE_PERCENT_26=40,WRITE_PERCENT_27=40,WRITE_PERCENT_28=40,WRITE_PERCENT_29=40,WRITE_PERCENT_30=40,WRITE_PERCENT_31=40,PAGEHIT_PERCENT_00=75,PAGEHIT_PERCENT_01=75,MC_ENABLE_00=TRUE,MC_ENABLE_01=TRUE,MC_ENABLE_02=TRUE,MC_ENABLE_03=TRUE,MC_ENABLE_04=TRUE,MC_ENABLE_05=TRUE,MC_ENABLE_06=TRUE,MC_ENABLE_07=TRUE,MC_ENABLE_08=FALSE,MC_ENABLE_09=FALSE,MC_ENABLE_10=FALSE,MC_ENABLE_11=FALSE,MC_ENABLE_12=FALSE,MC_ENABLE_13=FALSE,MC_ENABLE_14=FALSE,MC_ENABLE_15=FALSE,MC_ENABLE_APB_00=TRUE,MC_ENABLE_APB_01=FALSE,PHY_ENABLE_00=TRUE,PHY_ENABLE_01=TRUE,PHY_ENABLE_02=TRUE,PHY_ENABLE_03=TRUE,PHY_ENABLE_04=TRUE,PHY_ENABLE_05=TRUE,PHY_ENABLE_06=TRUE,PHY_ENABLE_07=TRUE,PHY_ENABLE_08=TRUE,PHY_ENABLE_09=TRUE,PHY_ENABLE_10=TRUE,PHY_ENABLE_11=TRUE,PHY_ENABLE_12=TRUE,PHY_ENABLE_13=TRUE,PHY_ENABLE_14=TRUE,PHY_ENABLE_15=TRUE,PHY_ENABLE_16=FALSE,PHY_ENABLE_17=FALSE,PHY_ENABLE_18=FALSE,PHY_ENABLE_19=FALSE,PHY_ENABLE_20=FALSE,PHY_ENABLE_21=FALSE,PHY_ENABLE_22=FALSE,PHY_ENABLE_23=FALSE,PHY_ENABLE_24=FALSE,PHY_ENABLE_25=FALSE,PHY_ENABLE_26=FALSE,PHY_ENABLE_27=FALSE,PHY_ENABLE_28=FALSE,PHY_ENABLE_29=FALSE,PHY_ENABLE_30=FALSE,PHY_ENABLE_31=FALSE,PHY_ENABLE_APB_00=TRUE,PHY_ENABLE_APB_01=FALSE}" *)
 	module tfhe_block #
 	(
 		// Users to add parameters here
@@ -14,16 +15,16 @@
 		parameter integer C_S00_AXI_ADDR_WIDTH	= 6,
 
 		// Parameters of Axi Master Bus Interface M00_AXI
-		parameter  C_M00_AXI_TARGET_SLAVE_BASE_ADDR	= 64'h40000000,
-		parameter integer C_M00_AXI_BURST_LEN	= 16,
-		parameter integer C_M00_AXI_ID_WIDTH	= 1,
-		parameter integer C_M00_AXI_ADDR_WIDTH	= 64,
-		parameter integer C_M00_AXI_DATA_WIDTH	= 256,
-		parameter integer C_M00_AXI_AWUSER_WIDTH	= 0,
-		parameter integer C_M00_AXI_ARUSER_WIDTH	= 0,
-		parameter integer C_M00_AXI_WUSER_WIDTH	= 0,
-		parameter integer C_M00_AXI_RUSER_WIDTH	= 0,
-		parameter integer C_M00_AXI_BUSER_WIDTH	= 0,
+		// parameter  C_M00_AXI_TARGET_SLAVE_BASE_ADDR	= 64'h40000000,
+		// parameter integer C_M00_AXI_BURST_LEN	= 16,
+		// parameter integer C_M00_AXI_ID_WIDTH	= 1,
+		// parameter integer C_M00_AXI_ADDR_WIDTH	= 64,
+		// parameter integer C_M00_AXI_DATA_WIDTH	= 256,
+		// parameter integer C_M00_AXI_AWUSER_WIDTH	= 0,
+		// parameter integer C_M00_AXI_ARUSER_WIDTH	= 0,
+		// parameter integer C_M00_AXI_WUSER_WIDTH	= 0,
+		// parameter integer C_M00_AXI_RUSER_WIDTH	= 0,
+		// parameter integer C_M00_AXI_BUSER_WIDTH	= 0,
 
 		// ============================================================
 		// Minimal parameters required by hbm_wrapper_hbm ports
@@ -34,7 +35,7 @@
 		parameter integer HBM_STACK_NUM_PS_PORTS = 16,
 
 		// ---------------- HBM data path ----------------
-		parameter integer  UNSIGNED_POLYM_COEFFICIENT_BIT_WIDTH = 64,
+		parameter integer UNSIGNED_POLYM_COEFFICIENT_BIT_WIDTH = 64,
 		parameter integer UNSIGNED_POLYM_COEFF_W = UNSIGNED_POLYM_COEFFICIENT_BIT_WIDTH,
 
 		parameter integer HBM_COEFFS_PER_CLK_PER_PS_PORT = 4,
@@ -1418,6 +1419,392 @@
 		// input  wire                         AXI_29_ARESET_N,
 		// input  wire                         AXI_30_ARESET_N,
 		// input  wire                         AXI_31_ARESET_N,
+
+		// --------------------------------------------------
+		// AXI_00 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_00_ARPROT,
+		input  wire [3:0] AXI_00_ARCACHE,
+		input  wire       AXI_00_ARLOCK,
+		input  wire [3:0] AXI_00_ARQOS,
+		input  wire [2:0] AXI_00_AWPROT,
+		input  wire [3:0] AXI_00_AWCACHE,
+		input  wire       AXI_00_AWLOCK,
+		input  wire [3:0] AXI_00_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_01 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_01_ARPROT,
+		input  wire [3:0] AXI_01_ARCACHE,
+		input  wire       AXI_01_ARLOCK,
+		input  wire [3:0] AXI_01_ARQOS,
+		input  wire [2:0] AXI_01_AWPROT,
+		input  wire [3:0] AXI_01_AWCACHE,
+		input  wire       AXI_01_AWLOCK,
+		input  wire [3:0] AXI_01_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_02 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_02_ARPROT,
+		input  wire [3:0] AXI_02_ARCACHE,
+		input  wire       AXI_02_ARLOCK,
+		input  wire [3:0] AXI_02_ARQOS,
+		input  wire [2:0] AXI_02_AWPROT,
+		input  wire [3:0] AXI_02_AWCACHE,
+		input  wire       AXI_02_AWLOCK,
+		input  wire [3:0] AXI_02_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_03 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_03_ARPROT,
+		input  wire [3:0] AXI_03_ARCACHE,
+		input  wire       AXI_03_ARLOCK,
+		input  wire [3:0] AXI_03_ARQOS,
+		input  wire [2:0] AXI_03_AWPROT,
+		input  wire [3:0] AXI_03_AWCACHE,
+		input  wire       AXI_03_AWLOCK,
+		input  wire [3:0] AXI_03_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_04 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_04_ARPROT,
+		input  wire [3:0] AXI_04_ARCACHE,
+		input  wire       AXI_04_ARLOCK,
+		input  wire [3:0] AXI_04_ARQOS,
+		input  wire [2:0] AXI_04_AWPROT,
+		input  wire [3:0] AXI_04_AWCACHE,
+		input  wire       AXI_04_AWLOCK,
+		input  wire [3:0] AXI_04_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_05 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_05_ARPROT,
+		input  wire [3:0] AXI_05_ARCACHE,
+		input  wire       AXI_05_ARLOCK,
+		input  wire [3:0] AXI_05_ARQOS,
+		input  wire [2:0] AXI_05_AWPROT,
+		input  wire [3:0] AXI_05_AWCACHE,
+		input  wire       AXI_05_AWLOCK,
+		input  wire [3:0] AXI_05_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_06 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_06_ARPROT,
+		input  wire [3:0] AXI_06_ARCACHE,
+		input  wire       AXI_06_ARLOCK,
+		input  wire [3:0] AXI_06_ARQOS,
+		input  wire [2:0] AXI_06_AWPROT,
+		input  wire [3:0] AXI_06_AWCACHE,
+		input  wire       AXI_06_AWLOCK,
+		input  wire [3:0] AXI_06_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_07 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_07_ARPROT,
+		input  wire [3:0] AXI_07_ARCACHE,
+		input  wire       AXI_07_ARLOCK,
+		input  wire [3:0] AXI_07_ARQOS,
+		input  wire [2:0] AXI_07_AWPROT,
+		input  wire [3:0] AXI_07_AWCACHE,
+		input  wire       AXI_07_AWLOCK,
+		input  wire [3:0] AXI_07_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_08 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_08_ARPROT,
+		input  wire [3:0] AXI_08_ARCACHE,
+		input  wire       AXI_08_ARLOCK,
+		input  wire [3:0] AXI_08_ARQOS,
+		input  wire [2:0] AXI_08_AWPROT,
+		input  wire [3:0] AXI_08_AWCACHE,
+		input  wire       AXI_08_AWLOCK,
+		input  wire [3:0] AXI_08_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_09 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_09_ARPROT,
+		input  wire [3:0] AXI_09_ARCACHE,
+		input  wire       AXI_09_ARLOCK,
+		input  wire [3:0] AXI_09_ARQOS,
+		input  wire [2:0] AXI_09_AWPROT,
+		input  wire [3:0] AXI_09_AWCACHE,
+		input  wire       AXI_09_AWLOCK,
+		input  wire [3:0] AXI_09_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_10 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_10_ARPROT,
+		input  wire [3:0] AXI_10_ARCACHE,
+		input  wire       AXI_10_ARLOCK,
+		input  wire [3:0] AXI_10_ARQOS,
+		input  wire [2:0] AXI_10_AWPROT,
+		input  wire [3:0] AXI_10_AWCACHE,
+		input  wire       AXI_10_AWLOCK,
+		input  wire [3:0] AXI_10_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_11 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_11_ARPROT,
+		input  wire [3:0] AXI_11_ARCACHE,
+		input  wire       AXI_11_ARLOCK,
+		input  wire [3:0] AXI_11_ARQOS,
+		input  wire [2:0] AXI_11_AWPROT,
+		input  wire [3:0] AXI_11_AWCACHE,
+		input  wire       AXI_11_AWLOCK,
+		input  wire [3:0] AXI_11_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_12 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_12_ARPROT,
+		input  wire [3:0] AXI_12_ARCACHE,
+		input  wire       AXI_12_ARLOCK,
+		input  wire [3:0] AXI_12_ARQOS,
+		input  wire [2:0] AXI_12_AWPROT,
+		input  wire [3:0] AXI_12_AWCACHE,
+		input  wire       AXI_12_AWLOCK,
+		input  wire [3:0] AXI_12_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_13 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_13_ARPROT,
+		input  wire [3:0] AXI_13_ARCACHE,
+		input  wire       AXI_13_ARLOCK,
+		input  wire [3:0] AXI_13_ARQOS,
+		input  wire [2:0] AXI_13_AWPROT,
+		input  wire [3:0] AXI_13_AWCACHE,
+		input  wire       AXI_13_AWLOCK,
+		input  wire [3:0] AXI_13_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_14 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_14_ARPROT,
+		input  wire [3:0] AXI_14_ARCACHE,
+		input  wire       AXI_14_ARLOCK,
+		input  wire [3:0] AXI_14_ARQOS,
+		input  wire [2:0] AXI_14_AWPROT,
+		input  wire [3:0] AXI_14_AWCACHE,
+		input  wire       AXI_14_AWLOCK,
+		input  wire [3:0] AXI_14_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_15 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_15_ARPROT,
+		input  wire [3:0] AXI_15_ARCACHE,
+		input  wire       AXI_15_ARLOCK,
+		input  wire [3:0] AXI_15_ARQOS,
+		input  wire [2:0] AXI_15_AWPROT,
+		input  wire [3:0] AXI_15_AWCACHE,
+		input  wire       AXI_15_AWLOCK,
+		input  wire [3:0] AXI_15_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_16 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_16_ARPROT,
+		input  wire [3:0] AXI_16_ARCACHE,
+		input  wire       AXI_16_ARLOCK,
+		input  wire [3:0] AXI_16_ARQOS,
+		input  wire [2:0] AXI_16_AWPROT,
+		input  wire [3:0] AXI_16_AWCACHE,
+		input  wire       AXI_16_AWLOCK,
+		input  wire [3:0] AXI_16_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_17 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_17_ARPROT,
+		input  wire [3:0] AXI_17_ARCACHE,
+		input  wire       AXI_17_ARLOCK,
+		input  wire [3:0] AXI_17_ARQOS,
+		input  wire [2:0] AXI_17_AWPROT,
+		input  wire [3:0] AXI_17_AWCACHE,
+		input  wire       AXI_17_AWLOCK,
+		input  wire [3:0] AXI_17_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_18 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_18_ARPROT,
+		input  wire [3:0] AXI_18_ARCACHE,
+		input  wire       AXI_18_ARLOCK,
+		input  wire [3:0] AXI_18_ARQOS,
+		input  wire [2:0] AXI_18_AWPROT,
+		input  wire [3:0] AXI_18_AWCACHE,
+		input  wire       AXI_18_AWLOCK,
+		input  wire [3:0] AXI_18_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_19 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_19_ARPROT,
+		input  wire [3:0] AXI_19_ARCACHE,
+		input  wire       AXI_19_ARLOCK,
+		input  wire [3:0] AXI_19_ARQOS,
+		input  wire [2:0] AXI_19_AWPROT,
+		input  wire [3:0] AXI_19_AWCACHE,
+		input  wire       AXI_19_AWLOCK,
+		input  wire [3:0] AXI_19_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_20 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_20_ARPROT,
+		input  wire [3:0] AXI_20_ARCACHE,
+		input  wire       AXI_20_ARLOCK,
+		input  wire [3:0] AXI_20_ARQOS,
+		input  wire [2:0] AXI_20_AWPROT,
+		input  wire [3:0] AXI_20_AWCACHE,
+		input  wire       AXI_20_AWLOCK,
+		input  wire [3:0] AXI_20_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_21 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_21_ARPROT,
+		input  wire [3:0] AXI_21_ARCACHE,
+		input  wire       AXI_21_ARLOCK,
+		input  wire [3:0] AXI_21_ARQOS,
+		input  wire [2:0] AXI_21_AWPROT,
+		input  wire [3:0] AXI_21_AWCACHE,
+		input  wire       AXI_21_AWLOCK,
+		input  wire [3:0] AXI_21_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_22 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_22_ARPROT,
+		input  wire [3:0] AXI_22_ARCACHE,
+		input  wire       AXI_22_ARLOCK,
+		input  wire [3:0] AXI_22_ARQOS,
+		input  wire [2:0] AXI_22_AWPROT,
+		input  wire [3:0] AXI_22_AWCACHE,
+		input  wire       AXI_22_AWLOCK,
+		input  wire [3:0] AXI_22_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_23 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_23_ARPROT,
+		input  wire [3:0] AXI_23_ARCACHE,
+		input  wire       AXI_23_ARLOCK,
+		input  wire [3:0] AXI_23_ARQOS,
+		input  wire [2:0] AXI_23_AWPROT,
+		input  wire [3:0] AXI_23_AWCACHE,
+		input  wire       AXI_23_AWLOCK,
+		input  wire [3:0] AXI_23_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_24 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_24_ARPROT,
+		input  wire [3:0] AXI_24_ARCACHE,
+		input  wire       AXI_24_ARLOCK,
+		input  wire [3:0] AXI_24_ARQOS,
+		input  wire [2:0] AXI_24_AWPROT,
+		input  wire [3:0] AXI_24_AWCACHE,
+		input  wire       AXI_24_AWLOCK,
+		input  wire [3:0] AXI_24_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_25 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_25_ARPROT,
+		input  wire [3:0] AXI_25_ARCACHE,
+		input  wire       AXI_25_ARLOCK,
+		input  wire [3:0] AXI_25_ARQOS,
+		input  wire [2:0] AXI_25_AWPROT,
+		input  wire [3:0] AXI_25_AWCACHE,
+		input  wire       AXI_25_AWLOCK,
+		input  wire [3:0] AXI_25_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_26 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_26_ARPROT,
+		input  wire [3:0] AXI_26_ARCACHE,
+		input  wire       AXI_26_ARLOCK,
+		input  wire [3:0] AXI_26_ARQOS,
+		input  wire [2:0] AXI_26_AWPROT,
+		input  wire [3:0] AXI_26_AWCACHE,
+		input  wire       AXI_26_AWLOCK,
+		input  wire [3:0] AXI_26_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_27 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_27_ARPROT,
+		input  wire [3:0] AXI_27_ARCACHE,
+		input  wire       AXI_27_ARLOCK,
+		input  wire [3:0] AXI_27_ARQOS,
+		input  wire [2:0] AXI_27_AWPROT,
+		input  wire [3:0] AXI_27_AWCACHE,
+		input  wire       AXI_27_AWLOCK,
+		input  wire [3:0] AXI_27_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_28 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_28_ARPROT,
+		input  wire [3:0] AXI_28_ARCACHE,
+		input  wire       AXI_28_ARLOCK,
+		input  wire [3:0] AXI_28_ARQOS,
+		input  wire [2:0] AXI_28_AWPROT,
+		input  wire [3:0] AXI_28_AWCACHE,
+		input  wire       AXI_28_AWLOCK,
+		input  wire [3:0] AXI_28_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_29 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_29_ARPROT,
+		input  wire [3:0] AXI_29_ARCACHE,
+		input  wire       AXI_29_ARLOCK,
+		input  wire [3:0] AXI_29_ARQOS,
+		input  wire [2:0] AXI_29_AWPROT,
+		input  wire [3:0] AXI_29_AWCACHE,
+		input  wire       AXI_29_AWLOCK,
+		input  wire [3:0] AXI_29_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_30 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_30_ARPROT,
+		input  wire [3:0] AXI_30_ARCACHE,
+		input  wire       AXI_30_ARLOCK,
+		input  wire [3:0] AXI_30_ARQOS,
+		input  wire [2:0] AXI_30_AWPROT,
+		input  wire [3:0] AXI_30_AWCACHE,
+		input  wire       AXI_30_AWLOCK,
+		input  wire [3:0] AXI_30_AWQOS,
+
+		// --------------------------------------------------
+		// AXI_31 sideband signals
+		// --------------------------------------------------
+		input  wire [2:0] AXI_31_ARPROT,
+		input  wire [3:0] AXI_31_ARCACHE,
+		input  wire       AXI_31_ARLOCK,
+		input  wire [3:0] AXI_31_ARQOS,
+		input  wire [2:0] AXI_31_AWPROT,
+		input  wire [3:0] AXI_31_AWCACHE,
+		input  wire       AXI_31_AWLOCK,
+		input  wire [3:0] AXI_31_AWQOS,
+
+
 
 		// --------------------------------------------------
 		// APB / Status
@@ -2871,6 +3258,327 @@
 		.DRAM_0_STAT_CATTRIP        (DRAM_0_STAT_CATTRIP),
 		.DRAM_0_STAT_TEMP           (DRAM_0_STAT_TEMP)
 	);
+
+	// AXI_00 sideband unused tie-offs
+	wire _unused_axi_00_arprot  = &AXI_00_ARPROT;
+	wire _unused_axi_00_arcache = &AXI_00_ARCACHE;
+	wire _unused_axi_00_arlock  = AXI_00_ARLOCK;
+	wire _unused_axi_00_arqos   = &AXI_00_ARQOS;
+	wire _unused_axi_00_awprot  = &AXI_00_AWPROT;
+	wire _unused_axi_00_awcache = &AXI_00_AWCACHE;
+	wire _unused_axi_00_awlock  = AXI_00_AWLOCK;
+	wire _unused_axi_00_awqos   = &AXI_00_AWQOS;
+
+	// AXI_01 sideband unused tie-offs
+	wire _unused_axi_01_arprot  = &AXI_01_ARPROT;
+	wire _unused_axi_01_arcache = &AXI_01_ARCACHE;
+	wire _unused_axi_01_arlock  = AXI_01_ARLOCK;
+	wire _unused_axi_01_arqos   = &AXI_01_ARQOS;
+	wire _unused_axi_01_awprot  = &AXI_01_AWPROT;
+	wire _unused_axi_01_awcache = &AXI_01_AWCACHE;
+	wire _unused_axi_01_awlock  = AXI_01_AWLOCK;
+	wire _unused_axi_01_awqos   = &AXI_01_AWQOS;
+
+	// AXI_02 sideband unused tie-offs
+	wire _unused_axi_02_arprot  = &AXI_02_ARPROT;
+	wire _unused_axi_02_arcache = &AXI_02_ARCACHE;
+	wire _unused_axi_02_arlock  = AXI_02_ARLOCK;
+	wire _unused_axi_02_arqos   = &AXI_02_ARQOS;
+	wire _unused_axi_02_awprot  = &AXI_02_AWPROT;
+	wire _unused_axi_02_awcache = &AXI_02_AWCACHE;
+	wire _unused_axi_02_awlock  = AXI_02_AWLOCK;
+	wire _unused_axi_02_awqos   = &AXI_02_AWQOS;
+
+	// AXI_03 sideband unused tie-offs
+	wire _unused_axi_03_arprot  = &AXI_03_ARPROT;
+	wire _unused_axi_03_arcache = &AXI_03_ARCACHE;
+	wire _unused_axi_03_arlock  = AXI_03_ARLOCK;
+	wire _unused_axi_03_arqos   = &AXI_03_ARQOS;
+	wire _unused_axi_03_awprot  = &AXI_03_AWPROT;
+	wire _unused_axi_03_awcache = &AXI_03_AWCACHE;
+	wire _unused_axi_03_awlock  = AXI_03_AWLOCK;
+	wire _unused_axi_03_awqos   = &AXI_03_AWQOS;
+
+	// AXI_04 sideband unused tie-offs
+	wire _unused_axi_04_arprot  = &AXI_04_ARPROT;
+	wire _unused_axi_04_arcache = &AXI_04_ARCACHE;
+	wire _unused_axi_04_arlock  = AXI_04_ARLOCK;
+	wire _unused_axi_04_arqos   = &AXI_04_ARQOS;
+	wire _unused_axi_04_awprot  = &AXI_04_AWPROT;
+	wire _unused_axi_04_awcache = &AXI_04_AWCACHE;
+	wire _unused_axi_04_awlock  = AXI_04_AWLOCK;
+	wire _unused_axi_04_awqos   = &AXI_04_AWQOS;
+
+	// AXI_05 sideband unused tie-offs
+	wire _unused_axi_05_arprot  = &AXI_05_ARPROT;
+	wire _unused_axi_05_arcache = &AXI_05_ARCACHE;
+	wire _unused_axi_05_arlock  = AXI_05_ARLOCK;
+	wire _unused_axi_05_arqos   = &AXI_05_ARQOS;
+	wire _unused_axi_05_awprot  = &AXI_05_AWPROT;
+	wire _unused_axi_05_awcache = &AXI_05_AWCACHE;
+	wire _unused_axi_05_awlock  = AXI_05_AWLOCK;
+	wire _unused_axi_05_awqos   = &AXI_05_AWQOS;
+
+	// AXI_06 sideband unused tie-offs
+	wire _unused_axi_06_arprot  = &AXI_06_ARPROT;
+	wire _unused_axi_06_arcache = &AXI_06_ARCACHE;
+	wire _unused_axi_06_arlock  = AXI_06_ARLOCK;
+	wire _unused_axi_06_arqos   = &AXI_06_ARQOS;
+	wire _unused_axi_06_awprot  = &AXI_06_AWPROT;
+	wire _unused_axi_06_awcache = &AXI_06_AWCACHE;
+	wire _unused_axi_06_awlock  = AXI_06_AWLOCK;
+	wire _unused_axi_06_awqos   = &AXI_06_AWQOS;
+
+	// AXI_07 sideband unused tie-offs
+	wire _unused_axi_07_arprot  = &AXI_07_ARPROT;
+	wire _unused_axi_07_arcache = &AXI_07_ARCACHE;
+	wire _unused_axi_07_arlock  = AXI_07_ARLOCK;
+	wire _unused_axi_07_arqos   = &AXI_07_ARQOS;
+	wire _unused_axi_07_awprot  = &AXI_07_AWPROT;
+	wire _unused_axi_07_awcache = &AXI_07_AWCACHE;
+	wire _unused_axi_07_awlock  = AXI_07_AWLOCK;
+	wire _unused_axi_07_awqos   = &AXI_07_AWQOS;
+
+	// AXI_08 sideband unused tie-offs
+	wire _unused_axi_08_arprot  = &AXI_08_ARPROT;
+	wire _unused_axi_08_arcache = &AXI_08_ARCACHE;
+	wire _unused_axi_08_arlock  = AXI_08_ARLOCK;
+	wire _unused_axi_08_arqos   = &AXI_08_ARQOS;
+	wire _unused_axi_08_awprot  = &AXI_08_AWPROT;
+	wire _unused_axi_08_awcache = &AXI_08_AWCACHE;
+	wire _unused_axi_08_awlock  = AXI_08_AWLOCK;
+	wire _unused_axi_08_awqos   = &AXI_08_AWQOS;
+
+	// AXI_09 sideband unused tie-offs
+	wire _unused_axi_09_arprot  = &AXI_09_ARPROT;
+	wire _unused_axi_09_arcache = &AXI_09_ARCACHE;
+	wire _unused_axi_09_arlock  = AXI_09_ARLOCK;
+	wire _unused_axi_09_arqos   = &AXI_09_ARQOS;
+	wire _unused_axi_09_awprot  = &AXI_09_AWPROT;
+	wire _unused_axi_09_awcache = &AXI_09_AWCACHE;
+	wire _unused_axi_09_awlock  = AXI_09_AWLOCK;
+	wire _unused_axi_09_awqos   = &AXI_09_AWQOS;
+
+	// AXI_10 sideband unused tie-offs
+	wire _unused_axi_10_arprot  = &AXI_10_ARPROT;
+	wire _unused_axi_10_arcache = &AXI_10_ARCACHE;
+	wire _unused_axi_10_arlock  = AXI_10_ARLOCK;
+	wire _unused_axi_10_arqos   = &AXI_10_ARQOS;
+	wire _unused_axi_10_awprot  = &AXI_10_AWPROT;
+	wire _unused_axi_10_awcache = &AXI_10_AWCACHE;
+	wire _unused_axi_10_awlock  = AXI_10_AWLOCK;
+	wire _unused_axi_10_awqos   = &AXI_10_AWQOS;
+
+	// AXI_11 sideband unused tie-offs
+	wire _unused_axi_11_arprot  = &AXI_11_ARPROT;
+	wire _unused_axi_11_arcache = &AXI_11_ARCACHE;
+	wire _unused_axi_11_arlock  = AXI_11_ARLOCK;
+	wire _unused_axi_11_arqos   = &AXI_11_ARQOS;
+	wire _unused_axi_11_awprot  = &AXI_11_AWPROT;
+	wire _unused_axi_11_awcache = &AXI_11_AWCACHE;
+	wire _unused_axi_11_awlock  = AXI_11_AWLOCK;
+	wire _unused_axi_11_awqos   = &AXI_11_AWQOS;
+
+	// AXI_12 sideband unused tie-offs
+	wire _unused_axi_12_arprot  = &AXI_12_ARPROT;
+	wire _unused_axi_12_arcache = &AXI_12_ARCACHE;
+	wire _unused_axi_12_arlock  = AXI_12_ARLOCK;
+	wire _unused_axi_12_arqos   = &AXI_12_ARQOS;
+	wire _unused_axi_12_awprot  = &AXI_12_AWPROT;
+	wire _unused_axi_12_awcache = &AXI_12_AWCACHE;
+	wire _unused_axi_12_awlock  = AXI_12_AWLOCK;
+	wire _unused_axi_12_awqos   = &AXI_12_AWQOS;
+
+	// AXI_13 sideband unused tie-offs
+	wire _unused_axi_13_arprot  = &AXI_13_ARPROT;
+	wire _unused_axi_13_arcache = &AXI_13_ARCACHE;
+	wire _unused_axi_13_arlock  = AXI_13_ARLOCK;
+	wire _unused_axi_13_arqos   = &AXI_13_ARQOS;
+	wire _unused_axi_13_awprot  = &AXI_13_AWPROT;
+	wire _unused_axi_13_awcache = &AXI_13_AWCACHE;
+	wire _unused_axi_13_awlock  = AXI_13_AWLOCK;
+	wire _unused_axi_13_awqos   = &AXI_13_AWQOS;
+
+	// AXI_14 sideband unused tie-offs
+	wire _unused_axi_14_arprot  = &AXI_14_ARPROT;
+	wire _unused_axi_14_arcache = &AXI_14_ARCACHE;
+	wire _unused_axi_14_arlock  = AXI_14_ARLOCK;
+	wire _unused_axi_14_arqos   = &AXI_14_ARQOS;
+	wire _unused_axi_14_awprot  = &AXI_14_AWPROT;
+	wire _unused_axi_14_awcache = &AXI_14_AWCACHE;
+	wire _unused_axi_14_awlock  = AXI_14_AWLOCK;
+	wire _unused_axi_14_awqos   = &AXI_14_AWQOS;
+
+	// AXI_15 sideband unused tie-offs
+	wire _unused_axi_15_arprot  = &AXI_15_ARPROT;
+	wire _unused_axi_15_arcache = &AXI_15_ARCACHE;
+	wire _unused_axi_15_arlock  = AXI_15_ARLOCK;
+	wire _unused_axi_15_arqos   = &AXI_15_ARQOS;
+	wire _unused_axi_15_awprot  = &AXI_15_AWPROT;
+	wire _unused_axi_15_awcache = &AXI_15_AWCACHE;
+	wire _unused_axi_15_awlock  = AXI_15_AWLOCK;
+	wire _unused_axi_15_awqos   = &AXI_15_AWQOS;
+
+	// AXI_16 sideband unused tie-offs
+	wire _unused_axi_16_arprot  = &AXI_16_ARPROT;
+	wire _unused_axi_16_arcache = &AXI_16_ARCACHE;
+	wire _unused_axi_16_arlock  = AXI_16_ARLOCK;
+	wire _unused_axi_16_arqos   = &AXI_16_ARQOS;
+	wire _unused_axi_16_awprot  = &AXI_16_AWPROT;
+	wire _unused_axi_16_awcache = &AXI_16_AWCACHE;
+	wire _unused_axi_16_awlock  = AXI_16_AWLOCK;
+	wire _unused_axi_16_awqos   = &AXI_16_AWQOS;
+
+	// AXI_17 sideband unused tie-offs
+	wire _unused_axi_17_arprot  = &AXI_17_ARPROT;
+	wire _unused_axi_17_arcache = &AXI_17_ARCACHE;
+	wire _unused_axi_17_arlock  = AXI_17_ARLOCK;
+	wire _unused_axi_17_arqos   = &AXI_17_ARQOS;
+	wire _unused_axi_17_awprot  = &AXI_17_AWPROT;
+	wire _unused_axi_17_awcache = &AXI_17_AWCACHE;
+	wire _unused_axi_17_awlock  = AXI_17_AWLOCK;
+	wire _unused_axi_17_awqos   = &AXI_17_AWQOS;
+
+	// AXI_18 sideband unused tie-offs
+	wire _unused_axi_18_arprot  = &AXI_18_ARPROT;
+	wire _unused_axi_18_arcache = &AXI_18_ARCACHE;
+	wire _unused_axi_18_arlock  = AXI_18_ARLOCK;
+	wire _unused_axi_18_arqos   = &AXI_18_ARQOS;
+	wire _unused_axi_18_awprot  = &AXI_18_AWPROT;
+	wire _unused_axi_18_awcache = &AXI_18_AWCACHE;
+	wire _unused_axi_18_awlock  = AXI_18_AWLOCK;
+	wire _unused_axi_18_awqos   = &AXI_18_AWQOS;
+
+	// AXI_19 sideband unused tie-offs
+	wire _unused_axi_19_arprot  = &AXI_19_ARPROT;
+	wire _unused_axi_19_arcache = &AXI_19_ARCACHE;
+	wire _unused_axi_19_arlock  = AXI_19_ARLOCK;
+	wire _unused_axi_19_arqos   = &AXI_19_ARQOS;
+	wire _unused_axi_19_awprot  = &AXI_19_AWPROT;
+	wire _unused_axi_19_awcache = &AXI_19_AWCACHE;
+	wire _unused_axi_19_awlock  = AXI_19_AWLOCK;
+	wire _unused_axi_19_awqos   = &AXI_19_AWQOS;
+
+	// AXI_20 sideband unused tie-offs
+	wire _unused_axi_20_arprot  = &AXI_20_ARPROT;
+	wire _unused_axi_20_arcache = &AXI_20_ARCACHE;
+	wire _unused_axi_20_arlock  = AXI_20_ARLOCK;
+	wire _unused_axi_20_arqos   = &AXI_20_ARQOS;
+	wire _unused_axi_20_awprot  = &AXI_20_AWPROT;
+	wire _unused_axi_20_awcache = &AXI_20_AWCACHE;
+	wire _unused_axi_20_awlock  = AXI_20_AWLOCK;
+	wire _unused_axi_20_awqos   = &AXI_20_AWQOS;
+
+	// AXI_21 sideband unused tie-offs
+	wire _unused_axi_21_arprot  = &AXI_21_ARPROT;
+	wire _unused_axi_21_arcache = &AXI_21_ARCACHE;
+	wire _unused_axi_21_arlock  = AXI_21_ARLOCK;
+	wire _unused_axi_21_arqos   = &AXI_21_ARQOS;
+	wire _unused_axi_21_awprot  = &AXI_21_AWPROT;
+	wire _unused_axi_21_awcache = &AXI_21_AWCACHE;
+	wire _unused_axi_21_awlock  = AXI_21_AWLOCK;
+	wire _unused_axi_21_awqos   = &AXI_21_AWQOS;
+
+	// AXI_22 sideband unused tie-offs
+	wire _unused_axi_22_arprot  = &AXI_22_ARPROT;
+	wire _unused_axi_22_arcache = &AXI_22_ARCACHE;
+	wire _unused_axi_22_arlock  = AXI_22_ARLOCK;
+	wire _unused_axi_22_arqos   = &AXI_22_ARQOS;
+	wire _unused_axi_22_awprot  = &AXI_22_AWPROT;
+	wire _unused_axi_22_awcache = &AXI_22_AWCACHE;
+	wire _unused_axi_22_awlock  = AXI_22_AWLOCK;
+	wire _unused_axi_22_awqos   = &AXI_22_AWQOS;
+
+	// AXI_23 sideband unused tie-offs
+	wire _unused_axi_23_arprot  = &AXI_23_ARPROT;
+	wire _unused_axi_23_arcache = &AXI_23_ARCACHE;
+	wire _unused_axi_23_arlock  = AXI_23_ARLOCK;
+	wire _unused_axi_23_arqos   = &AXI_23_ARQOS;
+	wire _unused_axi_23_awprot  = &AXI_23_AWPROT;
+	wire _unused_axi_23_awcache = &AXI_23_AWCACHE;
+	wire _unused_axi_23_awlock  = AXI_23_AWLOCK;
+	wire _unused_axi_23_awqos   = &AXI_23_AWQOS;
+
+	// AXI_24 sideband unused tie-offs
+	wire _unused_axi_24_arprot  = &AXI_24_ARPROT;
+	wire _unused_axi_24_arcache = &AXI_24_ARCACHE;
+	wire _unused_axi_24_arlock  = AXI_24_ARLOCK;
+	wire _unused_axi_24_arqos   = &AXI_24_ARQOS;
+	wire _unused_axi_24_awprot  = &AXI_24_AWPROT;
+	wire _unused_axi_24_awcache = &AXI_24_AWCACHE;
+	wire _unused_axi_24_awlock  = AXI_24_AWLOCK;
+	wire _unused_axi_24_awqos   = &AXI_24_AWQOS;
+
+	// AXI_25 sideband unused tie-offs
+	wire _unused_axi_25_arprot  = &AXI_25_ARPROT;
+	wire _unused_axi_25_arcache = &AXI_25_ARCACHE;
+	wire _unused_axi_25_arlock  = AXI_25_ARLOCK;
+	wire _unused_axi_25_arqos   = &AXI_25_ARQOS;
+	wire _unused_axi_25_awprot  = &AXI_25_AWPROT;
+	wire _unused_axi_25_awcache = &AXI_25_AWCACHE;
+	wire _unused_axi_25_awlock  = AXI_25_AWLOCK;
+	wire _unused_axi_25_awqos   = &AXI_25_AWQOS;
+
+	// AXI_26 sideband unused tie-offs
+	wire _unused_axi_26_arprot  = &AXI_26_ARPROT;
+	wire _unused_axi_26_arcache = &AXI_26_ARCACHE;
+	wire _unused_axi_26_arlock  = AXI_26_ARLOCK;
+	wire _unused_axi_26_arqos   = &AXI_26_ARQOS;
+	wire _unused_axi_26_awprot  = &AXI_26_AWPROT;
+	wire _unused_axi_26_awcache = &AXI_26_AWCACHE;
+	wire _unused_axi_26_awlock  = AXI_26_AWLOCK;
+	wire _unused_axi_26_awqos   = &AXI_26_AWQOS;
+
+	// AXI_27 sideband unused tie-offs
+	wire _unused_axi_27_arprot  = &AXI_27_ARPROT;
+	wire _unused_axi_27_arcache = &AXI_27_ARCACHE;
+	wire _unused_axi_27_arlock  = AXI_27_ARLOCK;
+	wire _unused_axi_27_arqos   = &AXI_27_ARQOS;
+	wire _unused_axi_27_awprot  = &AXI_27_AWPROT;
+	wire _unused_axi_27_awcache = &AXI_27_AWCACHE;
+	wire _unused_axi_27_awlock  = AXI_27_AWLOCK;
+	wire _unused_axi_27_awqos   = &AXI_27_AWQOS;
+
+	// AXI_28 sideband unused tie-offs
+	wire _unused_axi_28_arprot  = &AXI_28_ARPROT;
+	wire _unused_axi_28_arcache = &AXI_28_ARCACHE;
+	wire _unused_axi_28_arlock  = AXI_28_ARLOCK;
+	wire _unused_axi_28_arqos   = &AXI_28_ARQOS;
+	wire _unused_axi_28_awprot  = &AXI_28_AWPROT;
+	wire _unused_axi_28_awcache = &AXI_28_AWCACHE;
+	wire _unused_axi_28_awlock  = AXI_28_AWLOCK;
+	wire _unused_axi_28_awqos   = &AXI_28_AWQOS;
+
+	// AXI_29 sideband unused tie-offs
+	wire _unused_axi_29_arprot  = &AXI_29_ARPROT;
+	wire _unused_axi_29_arcache = &AXI_29_ARCACHE;
+	wire _unused_axi_29_arlock  = AXI_29_ARLOCK;
+	wire _unused_axi_29_arqos   = &AXI_29_ARQOS;
+	wire _unused_axi_29_awprot  = &AXI_29_AWPROT;
+	wire _unused_axi_29_awcache = &AXI_29_AWCACHE;
+	wire _unused_axi_29_awlock  = AXI_29_AWLOCK;
+	wire _unused_axi_29_awqos   = &AXI_29_AWQOS;
+
+	// AXI_30 sideband unused tie-offs
+	wire _unused_axi_30_arprot  = &AXI_30_ARPROT;
+	wire _unused_axi_30_arcache = &AXI_30_ARCACHE;
+	wire _unused_axi_30_arlock  = AXI_30_ARLOCK;
+	wire _unused_axi_30_arqos   = &AXI_30_ARQOS;
+	wire _unused_axi_30_awprot  = &AXI_30_AWPROT;
+	wire _unused_axi_30_awcache = &AXI_30_AWCACHE;
+	wire _unused_axi_30_awlock  = AXI_30_AWLOCK;
+	wire _unused_axi_30_awqos   = &AXI_30_AWQOS;
+
+	// AXI_31 sideband unused tie-offs
+	wire _unused_axi_31_arprot  = &AXI_31_ARPROT;
+	wire _unused_axi_31_arcache = &AXI_31_ARCACHE;
+	wire _unused_axi_31_arlock  = AXI_31_ARLOCK;
+	wire _unused_axi_31_arqos   = &AXI_31_ARQOS;
+	wire _unused_axi_31_awprot  = &AXI_31_AWPROT;
+	wire _unused_axi_31_awcache = &AXI_31_AWCACHE;
+	wire _unused_axi_31_awlock  = AXI_31_AWLOCK;
+	wire _unused_axi_31_awqos   = &AXI_31_AWQOS;
+
 
 
 

@@ -1,159 +1,128 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <sys/mman.h>
 #include <errno.h>
 
-#define XDMA_USER_DEV "/dev/xdma0_user"
+#define XDMA_DEV "/dev/xdma0_user"
 
-/* AXI-Lite BAR size */
-#define MAP_SIZE 4096
+/* AXI-Lite register offsets */
+#define REG0_CTRL_STATUS_OFFSET 0x0
 
-/* Register offsets */
-#define REG_CTRL     0x00
-#define REG_WR_ADDR  0x04
-#define REG_WR_LEN   0x08
-#define REG_STATUS   0x0C
-#define REG_RD_ADDR  0x10
-#define REG_RD_LEN   0x14
+/* slv_reg0 bit definitions */
+#define CTRL_START   (1u << 0)  // write 1 to trigger
+#define STAT_BUSY    (1u << 1)  // read-only
+#define STAT_DONE    (1u << 2)  // sticky, cleared on START
+#define CTRL_RS      (1u << 3)  // reserved
 
-/* CTRL bits */
-#define CTRL_START   (1u << 0)
+#define HBM_WR0      (1u << 4)
+#define HBM_RD0      (1u << 5)
+#define HBM_WR1      (1u << 6)
+#define HBM_RD1      (1u << 7)
 
-/* STATUS bits */
-#define STATUS_BUSY  (1u << 0)
-#define STATUS_DONE  (1u << 1)
+/* Reserved bits [31:8] must be 0 */
+#define CTRL_ALLOWED_MASK 0x000000FFu
 
-static inline void mmio_write(volatile uint32_t *regs,
-                              uint32_t offset,
-                              uint32_t value)
+static int reg_write32(int fd, off_t off, uint32_t v)
 {
-    regs[offset >> 2] = value;
-}
-
-static inline uint32_t mmio_read(volatile uint32_t *regs,
-                                 uint32_t offset)
-{
-    return regs[offset >> 2];
-}
-
-int main(int argc, char *argv[])
-{
-    if (argc != 3) {
-        fprintf(stderr,
-            "Usage: %s <wr_addr_hex> <wr_len_dec>\n"
-            "Example: %s 0x80000000 4096\n",
-            argv[0], argv[0]);
-        return 1;
+    if (pwrite(fd, &v, sizeof(v), off) != (ssize_t)sizeof(v)) {
+        return -1;
     }
+    return 0;
+}
 
-    uint32_t wr_addr = strtoul(argv[1], NULL, 0);
-    uint32_t wr_len  = strtoul(argv[2], NULL, 0);
+static int reg_read32(int fd, off_t off, uint32_t *v)
+{
+    if (pread(fd, v, sizeof(*v), off) != (ssize_t)sizeof(*v)) {
+        return -1;
+    }
+    return 0;
+}
 
-    int fd = open(XDMA_USER_DEV, O_RDWR | O_SYNC);
+int main(void)
+{
+    int fd = open(XDMA_DEV, O_RDWR | O_SYNC);
     if (fd < 0) {
-        perror("open xdma user");
+        perror("open");
         return 1;
     }
 
-    void *map = mmap(NULL, MAP_SIZE,
-                     PROT_READ | PROT_WRITE,
-                     MAP_SHARED, fd, 0);
-    if (map == MAP_FAILED) {
-        perror("mmap");
+    uint32_t r;
+
+    /* -------------------------------
+     * Example: configure HBM selects
+     *   0 = Host, 1 = TFHE_PU
+     *
+     * Here we route BOTH stacks read+write to TFHE_PU:
+     *   WR0=1 RD0=1 WR1=1 RD1=1  => bits[7:4] = 0xF
+     * Change this mask to what needs to be routed.
+     * ------------------------------- */
+    // uint32_t select_bits = (HBM_WR0 | HBM_RD0 | HBM_WR1 | HBM_RD1);
+
+
+    uint32_t select_bits = (HBM_WR1 | HBM_RD1 | HBM_WR1 | HBM_RD1);
+
+    /* Write initial control value (no START yet). Keep reserved bits 0. */
+    uint32_t ctrl = (select_bits & CTRL_ALLOWED_MASK);
+    if (reg_write32(fd, REG0_CTRL_STATUS_OFFSET, ctrl) != 0) {
+        perror("pwrite ctrl");
         close(fd);
         return 1;
     }
 
-    volatile uint32_t *regs = (volatile uint32_t *)map;
+    if (reg_read32(fd, REG0_CTRL_STATUS_OFFSET, &r) != 0) {
+        perror("pread ctrl");
+        close(fd);
+        return 1;
+    }
+    printf("CTRL/STATUS [0x%02X] = 0x%08x\n", REG0_CTRL_STATUS_OFFSET, r);
 
-    /* --------------------------------------------------
-     * Program accelerator
-     * -------------------------------------------------- */
-    mmio_write(regs, REG_WR_ADDR, wr_addr);
-    mmio_write(regs, REG_WR_LEN,  wr_len);
+    /* -------------------------------
+     * Trigger START (write 1 to bit0).
+     * Note: DONE is sticky but cleared on START by HW.
+     * Keep reserved bits 0.
+     * ------------------------------- */
+    ctrl = (select_bits | CTRL_START) & CTRL_ALLOWED_MASK;
+    if (reg_write32(fd, REG0_CTRL_STATUS_OFFSET, ctrl) != 0) {
+        perror("pwrite start");
+        close(fd);
+        return 1;
+    }
 
-    /* Kick accelerator (W1P) */
-    mmio_write(regs, REG_CTRL, CTRL_START);
+    /* Optional: if START is treated as a pulse, we can deassert it. */
+    ctrl = (select_bits) & CTRL_ALLOWED_MASK;
+    if (reg_write32(fd, REG0_CTRL_STATUS_OFFSET, ctrl) != 0) {
+        perror("pwrite deassert start");
+        close(fd);
+        return 1;
+    }
 
-    printf("Started PBS\n");
-    printf("  WR_ADDR = 0x%08x\n", wr_addr);
-    printf("  WR_LEN  = %u\n", wr_len);
+    /* -------------------------------
+     * Poll until DONE=1 (or BUSY deasserts)
+     * ------------------------------- */
+    // printf("Polling for DONE...\n");
+    // for (;;) {
+    //     if (reg_read32(fd, REG0_CTRL_STATUS_OFFSET, &r) != 0) {
+    //         perror("pread poll");
+    //         close(fd);
+    //         return 1;
+    //     }
 
-    /* --------------------------------------------------
-     * Poll status (simple version)
-     * -------------------------------------------------- */
-    // uint32_t status;
-    // do {
-    //     status = mmio_read(regs, REG_STATUS);
-    // } while (status & STATUS_BUSY);
+    //     uint32_t busy = (r & STAT_BUSY) ? 1u : 0u;
+    //     uint32_t done = (r & STAT_DONE) ? 1u : 0u;
 
-    // if (status & STATUS_DONE) {
-    //     uint32_t rd_addr = mmio_read(regs, REG_RD_ADDR);
-    //     uint32_t rd_len  = mmio_read(regs, REG_RD_LEN);
+    //     printf("\rCTRL/STATUS = 0x%08x  (BUSY=%u DONE=%u)   ", r, busy, done);
+    //     fflush(stdout);
 
-    //     printf("PBS done\n");
-    //     printf("  RD_ADDR = 0x%08x\n", rd_addr);
-    //     printf("  RD_LEN  = %u\n", rd_len);
-    // } else {
-    //     printf("Unexpected status: 0x%08x\n", status);
+    //     if (done) {
+    //         printf("\nDONE observed.\n");
+    //         break;
+    //     }
+
+    //     /* Don’t hammer AXI-Lite too hard */
+    //     usleep(1000);
     // }
 
-    munmap(map, MAP_SIZE);
     close(fd);
     return 0;
 }
-
-
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <stdint.h>
-// #include <fcntl.h>
-// #include <unistd.h>
-// #include <sys/mman.h>
-
-// #define XDMA_USER_DEV "/dev/xdma0_user"
-// #define XDMA_HBM_WRITE "/dev/xdma0_h2c_*"
-// #define XDMA_HBM_READ "/dev/xdma0_c2h_*"
-
-// #define MAP_SIZE      4096        // Matches AXI-Lite BAR size
-// #define REG_OFFSET    0x0         // slv_reg0
-
-// int main(int argc, char *argv[])
-// {
-//     if (argc != 2) {
-//         printf("Usage: %s <pattern>\n", argv[0]);
-//         return 1;
-//     }
-
-//     uint32_t pattern = atoi(argv[1]);
-
-//     int fd = open(XDMA_USER_DEV, O_RDWR | O_SYNC);
-//     if (fd < 0) {
-//         perror("open");
-//         return 1;
-//     }
-
-//     void *map = mmap(NULL, MAP_SIZE, PROT_READ | PROT_WRITE,
-//                      MAP_SHARED, fd, 0);
-
-//     if (map == MAP_FAILED) {
-//         perror("mmap");
-//         close(fd);
-//         return 1;
-//     }
-
-//     volatile uint32_t *regs = (volatile uint32_t *)map;
-
-//     // Write pattern to slv_reg0
-//     regs[REG_OFFSET / 4] = pattern;
-
-//     printf("Wrote pattern %u to AXI-Lite register 0x%x\n",
-//            pattern, REG_OFFSET);
-
-//     munmap(map, MAP_SIZE);
-//     close(fd);
-//     return 0;
-// }
