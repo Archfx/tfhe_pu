@@ -1377,9 +1377,47 @@ architecture rtl of tfhe_pu is
 	signal o_initial_init_ready : std_ulogic;
 
 	
-	
+	-- 2FF synchronizer for TFHE_RESET_N into TFHE_CLK domain
+	signal tfhe_reset_n_ff1     : std_ulogic := '0';
+	signal tfhe_reset_n_ff2     : std_ulogic := '0';
+	signal tfhe_reset_n_sync    : std_ulogic;  
+
+	-- edge detect in TFHE_CLK domain
+	signal tfhe_reset_n_sync_d  : std_ulogic := '0';
+	signal start_pulse          : std_ulogic := '0';
+
+	-- Mark sync flops for Vivado CDC
+	attribute ASYNC_REG : string;
+	attribute ASYNC_REG of tfhe_reset_n_ff1 : signal is "TRUE";
+	attribute ASYNC_REG of tfhe_reset_n_ff2 : signal is "TRUE";
 
 begin
+
+	-----------------------------------------------------------------------------
+	-- Synchronize TFHE_RESET_N into TFHE_CLK
+	-----------------------------------------------------------------------------
+	p_sync_tfhe_reset_n : process(TFHE_CLK)
+	begin
+		if rising_edge(TFHE_CLK) then
+		tfhe_reset_n_ff1 <= TFHE_RESET_N;
+		tfhe_reset_n_ff2 <= tfhe_reset_n_ff1;
+		end if;
+	end process;
+
+	--  synchronized reset is the 2nd stage output
+	tfhe_reset_n_sync <= tfhe_reset_n_ff2;
+
+	-----------------------------------------------------------------------------
+	-- Rising-edge detect (start event) in TFHE_CLK domain
+	-----------------------------------------------------------------------------
+	p_start_pulse : process(TFHE_CLK)
+	begin
+		if rising_edge(TFHE_CLK) then
+		tfhe_reset_n_sync_d <= tfhe_reset_n_sync;
+		start_pulse         <= (not tfhe_reset_n_sync_d) and tfhe_reset_n_sync;  -- 1-cycle pulse
+		end if;
+	end process;
+
 
 
 	ai_hbm_out(0)                            <= hbm_read_out_pkgs_stack_1(channel_ai_idx);
@@ -1419,7 +1457,7 @@ begin
 			o_read_pkgs          => hbm_read_out_pkgs_stack_0,
 			o_initial_init_ready => o_initial_init_ready,
 
-			TFHE_CLK             => TFHE_CLK,
+			-- TFHE_CLK             => TFHE_CLK,
 
 			-- --------------------------------------------------
 			-- External AXI master – common
@@ -2129,7 +2167,7 @@ begin
 			o_read_pkgs          => hbm_read_out_pkgs_stack_1,
 			o_initial_init_ready => o_initial_init_ready,
 
-			TFHE_CLK             => TFHE_CLK,
+			-- TFHE_CLK             => AXI_00_ACLK,--TFHE_CLK,
 
 			-- --------------------------------------------------
 			-- External AXI master – common
@@ -2808,7 +2846,7 @@ begin
 	u_pbs_accel : entity work.tfhe_pbs_accelerator
 		port map (
 			i_clk               => TFHE_CLK,
-			i_reset_n           => TFHE_RESET_N,
+			i_reset_n           => tfhe_reset_n_sync,
 			i_ram_coeff_idx     => lwe_n_buf_rq_idx,
 			i_ai_hbm_out        => ai_hbm_out,
 			i_bsk_hbm_out       => bsk_hbm_out,

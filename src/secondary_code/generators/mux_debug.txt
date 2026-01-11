@@ -1,0 +1,772 @@
+-- ==================================================
+-- HOST-ONLY DIRECT CONNECT (HBM <-> HOST), TFHE DISABLED
+-- ==================================================
+
+-- -------------------- AXI_00 --------------------
+hbm_00_araddr <= AXI_00_ARADDR;
+hbm_00_arburst <= AXI_00_ARBURST;
+hbm_00_arid <= AXI_00_ARID;
+hbm_00_arlen <= AXI_00_ARLEN;
+hbm_00_arsize <= AXI_00_ARSIZE;
+hbm_00_arvalid <= AXI_00_ARVALID;
+hbm_00_rready <= AXI_00_RREADY;
+hbm_00_awaddr <= AXI_00_AWADDR;
+hbm_00_awburst <= AXI_00_AWBURST;
+hbm_00_awid <= AXI_00_AWID;
+hbm_00_awlen <= AXI_00_AWLEN;
+hbm_00_awsize <= AXI_00_AWSIZE;
+hbm_00_awvalid <= AXI_00_AWVALID;
+hbm_00_wdata <= AXI_00_WDATA;
+hbm_00_wlast <= AXI_00_WLAST;
+hbm_00_wstrb <= AXI_00_WSTRB;
+hbm_00_wdata_parity <= AXI_00_WDATA_PARITY;
+hbm_00_wvalid <= AXI_00_WVALID;
+hbm_00_bready <= AXI_00_BREADY;
+
+AXI_00_ARREADY <= hbm_00_arready;
+AXI_00_RDATA_PARITY <= hbm_00_rdata_parity;
+AXI_00_RDATA <= hbm_00_rdata;
+AXI_00_RID <= hbm_00_rid;
+AXI_00_RLAST <= hbm_00_rlast;
+AXI_00_RRESP <= hbm_00_rresp;
+AXI_00_RVALID <= hbm_00_rvalid;
+AXI_00_AWREADY <= hbm_00_awready;
+AXI_00_WREADY <= hbm_00_wready;
+AXI_00_BID <= hbm_00_bid;
+AXI_00_BRESP <= hbm_00_bresp;
+AXI_00_BVALID <= hbm_00_bvalid;
+
+o_read_pkgs(0).arready <= '0';
+o_read_pkgs(0).rdata_parity <= (others => '0');
+o_read_pkgs(0).rdata <= (others => '0');
+o_read_pkgs(0).rid <= (others => '0');
+o_read_pkgs(0).rlast <= '0';
+o_read_pkgs(0).rresp <= (others => '0');
+o_read_pkgs(0).rvalid <= '0';
+o_write_pkgs(0).awready <= '0';
+o_write_pkgs(0).wready <= '0';
+o_write_pkgs(0).bid <= (others => '0');
+o_write_pkgs(0).bresp <= (others => '0');
+o_write_pkgs(0).bvalid <= '0';
+
+
+-- -------------------- AXI_01 --------------------
+hbm_01_araddr <= AXI_01_ARADDR;
+hbm_01_arburst <= AXI_01_ARBURST;
+hbm_01_arid <= AXI_01_ARID;
+hbm_01_arlen <= AXI_01_ARLEN;
+hbm_01_arsize <= AXI_01_ARSIZE;
+hbm_01_arvalid <= AXI_01_ARVALID;
+hbm_01_rready <= AXI_01_RREADY;
+hbm_01_awaddr <= AXI_01_AWADDR;
+hbm_01_awburst <= AXI_01_AWBURST;
+hbm_01_awid <= AXI_01_AWID;
+hbm_01_awlen <= AXI_01_AWLEN;
+hbm_01_awsize <= AXI_01_AWSIZE;
+hbm_01_awvalid <= AXI_01_AWVALID;
+hbm_01_wdata <= AXI_01_WDATA;
+hbm_01_wlast <= AXI_01_WLAST;
+hbm_01_wstrb <= AXI_01_WSTRB;
+hbm_01_wdata_parity <= AXI_01_WDATA_PARITY;
+hbm_01_wvalid <= AXI_01_WVALID;
+hbm_01_bready <= AXI_01_BREADY;
+
+AXI_01_ARREADY <= hbm_01_arready;
+AXI_01_RDATA_PARITY <= hbm_01_rdata_parity;
+AXI_01_RDATA <= hbm_01_rdata;
+AXI_01_RID <= hbm_01_rid;
+AXI_01_RLAST <= hbm_01_rlast;
+AXI_01_RRESP <= hbm_01_rresp;
+AXI_01_RVALID <= hbm_01_rvalid;
+AXI_01_AWREADY <= hbm_01_awready;
+AXI_01_WREADY <= hbm_01_wready;
+AXI_01_BID <= hbm_01_bid;
+AXI_01_BRESP <= hbm_01_bresp;
+AXI_01_BVALID <= hbm_01_bvalid;
+
+o_read_pkgs(1).arready <= '0';
+o_read_pkgs(1).rdata_parity <= (others => '0');
+o_read_pkgs(1).rdata <= (others => '0');
+o_read_pkgs(1).rid <= (others => '0');
+o_read_pkgs(1).rlast <= '0';
+o_read_pkgs(1).rresp <= (others => '0');
+o_read_pkgs(1).rvalid <= '0';
+o_write_pkgs(1).awready <= '0';
+o_write_pkgs(1).wready <= '0';
+o_write_pkgs(1).bid <= (others => '0');
+o_write_pkgs(1).bresp <= (others => '0');
+o_write_pkgs(1).bvalid <= '0';
+
+
+-- -------------------- AXI_02 --------------------
+hbm_02_araddr <= AXI_02_ARADDR;
+hbm_02_arburst <= AXI_02_ARBURST;
+hbm_02_arid <= AXI_02_ARID;
+hbm_02_arlen <= AXI_02_ARLEN;
+hbm_02_arsize <= AXI_02_ARSIZE;
+hbm_02_arvalid <= AXI_02_ARVALID;
+hbm_02_rready <= AXI_02_RREADY;
+hbm_02_awaddr <= AXI_02_AWADDR;
+hbm_02_awburst <= AXI_02_AWBURST;
+hbm_02_awid <= AXI_02_AWID;
+hbm_02_awlen <= AXI_02_AWLEN;
+hbm_02_awsize <= AXI_02_AWSIZE;
+hbm_02_awvalid <= AXI_02_AWVALID;
+hbm_02_wdata <= AXI_02_WDATA;
+hbm_02_wlast <= AXI_02_WLAST;
+hbm_02_wstrb <= AXI_02_WSTRB;
+hbm_02_wdata_parity <= AXI_02_WDATA_PARITY;
+hbm_02_wvalid <= AXI_02_WVALID;
+hbm_02_bready <= AXI_02_BREADY;
+
+AXI_02_ARREADY <= hbm_02_arready;
+AXI_02_RDATA_PARITY <= hbm_02_rdata_parity;
+AXI_02_RDATA <= hbm_02_rdata;
+AXI_02_RID <= hbm_02_rid;
+AXI_02_RLAST <= hbm_02_rlast;
+AXI_02_RRESP <= hbm_02_rresp;
+AXI_02_RVALID <= hbm_02_rvalid;
+AXI_02_AWREADY <= hbm_02_awready;
+AXI_02_WREADY <= hbm_02_wready;
+AXI_02_BID <= hbm_02_bid;
+AXI_02_BRESP <= hbm_02_bresp;
+AXI_02_BVALID <= hbm_02_bvalid;
+
+o_read_pkgs(2).arready <= '0';
+o_read_pkgs(2).rdata_parity <= (others => '0');
+o_read_pkgs(2).rdata <= (others => '0');
+o_read_pkgs(2).rid <= (others => '0');
+o_read_pkgs(2).rlast <= '0';
+o_read_pkgs(2).rresp <= (others => '0');
+o_read_pkgs(2).rvalid <= '0';
+o_write_pkgs(2).awready <= '0';
+o_write_pkgs(2).wready <= '0';
+o_write_pkgs(2).bid <= (others => '0');
+o_write_pkgs(2).bresp <= (others => '0');
+o_write_pkgs(2).bvalid <= '0';
+
+
+-- -------------------- AXI_03 --------------------
+hbm_03_araddr <= AXI_03_ARADDR;
+hbm_03_arburst <= AXI_03_ARBURST;
+hbm_03_arid <= AXI_03_ARID;
+hbm_03_arlen <= AXI_03_ARLEN;
+hbm_03_arsize <= AXI_03_ARSIZE;
+hbm_03_arvalid <= AXI_03_ARVALID;
+hbm_03_rready <= AXI_03_RREADY;
+hbm_03_awaddr <= AXI_03_AWADDR;
+hbm_03_awburst <= AXI_03_AWBURST;
+hbm_03_awid <= AXI_03_AWID;
+hbm_03_awlen <= AXI_03_AWLEN;
+hbm_03_awsize <= AXI_03_AWSIZE;
+hbm_03_awvalid <= AXI_03_AWVALID;
+hbm_03_wdata <= AXI_03_WDATA;
+hbm_03_wlast <= AXI_03_WLAST;
+hbm_03_wstrb <= AXI_03_WSTRB;
+hbm_03_wdata_parity <= AXI_03_WDATA_PARITY;
+hbm_03_wvalid <= AXI_03_WVALID;
+hbm_03_bready <= AXI_03_BREADY;
+
+AXI_03_ARREADY <= hbm_03_arready;
+AXI_03_RDATA_PARITY <= hbm_03_rdata_parity;
+AXI_03_RDATA <= hbm_03_rdata;
+AXI_03_RID <= hbm_03_rid;
+AXI_03_RLAST <= hbm_03_rlast;
+AXI_03_RRESP <= hbm_03_rresp;
+AXI_03_RVALID <= hbm_03_rvalid;
+AXI_03_AWREADY <= hbm_03_awready;
+AXI_03_WREADY <= hbm_03_wready;
+AXI_03_BID <= hbm_03_bid;
+AXI_03_BRESP <= hbm_03_bresp;
+AXI_03_BVALID <= hbm_03_bvalid;
+
+o_read_pkgs(3).arready <= '0';
+o_read_pkgs(3).rdata_parity <= (others => '0');
+o_read_pkgs(3).rdata <= (others => '0');
+o_read_pkgs(3).rid <= (others => '0');
+o_read_pkgs(3).rlast <= '0';
+o_read_pkgs(3).rresp <= (others => '0');
+o_read_pkgs(3).rvalid <= '0';
+o_write_pkgs(3).awready <= '0';
+o_write_pkgs(3).wready <= '0';
+o_write_pkgs(3).bid <= (others => '0');
+o_write_pkgs(3).bresp <= (others => '0');
+o_write_pkgs(3).bvalid <= '0';
+
+
+-- -------------------- AXI_04 --------------------
+hbm_04_araddr <= AXI_04_ARADDR;
+hbm_04_arburst <= AXI_04_ARBURST;
+hbm_04_arid <= AXI_04_ARID;
+hbm_04_arlen <= AXI_04_ARLEN;
+hbm_04_arsize <= AXI_04_ARSIZE;
+hbm_04_arvalid <= AXI_04_ARVALID;
+hbm_04_rready <= AXI_04_RREADY;
+hbm_04_awaddr <= AXI_04_AWADDR;
+hbm_04_awburst <= AXI_04_AWBURST;
+hbm_04_awid <= AXI_04_AWID;
+hbm_04_awlen <= AXI_04_AWLEN;
+hbm_04_awsize <= AXI_04_AWSIZE;
+hbm_04_awvalid <= AXI_04_AWVALID;
+hbm_04_wdata <= AXI_04_WDATA;
+hbm_04_wlast <= AXI_04_WLAST;
+hbm_04_wstrb <= AXI_04_WSTRB;
+hbm_04_wdata_parity <= AXI_04_WDATA_PARITY;
+hbm_04_wvalid <= AXI_04_WVALID;
+hbm_04_bready <= AXI_04_BREADY;
+
+AXI_04_ARREADY <= hbm_04_arready;
+AXI_04_RDATA_PARITY <= hbm_04_rdata_parity;
+AXI_04_RDATA <= hbm_04_rdata;
+AXI_04_RID <= hbm_04_rid;
+AXI_04_RLAST <= hbm_04_rlast;
+AXI_04_RRESP <= hbm_04_rresp;
+AXI_04_RVALID <= hbm_04_rvalid;
+AXI_04_AWREADY <= hbm_04_awready;
+AXI_04_WREADY <= hbm_04_wready;
+AXI_04_BID <= hbm_04_bid;
+AXI_04_BRESP <= hbm_04_bresp;
+AXI_04_BVALID <= hbm_04_bvalid;
+
+o_read_pkgs(4).arready <= '0';
+o_read_pkgs(4).rdata_parity <= (others => '0');
+o_read_pkgs(4).rdata <= (others => '0');
+o_read_pkgs(4).rid <= (others => '0');
+o_read_pkgs(4).rlast <= '0';
+o_read_pkgs(4).rresp <= (others => '0');
+o_read_pkgs(4).rvalid <= '0';
+o_write_pkgs(4).awready <= '0';
+o_write_pkgs(4).wready <= '0';
+o_write_pkgs(4).bid <= (others => '0');
+o_write_pkgs(4).bresp <= (others => '0');
+o_write_pkgs(4).bvalid <= '0';
+
+
+-- -------------------- AXI_05 --------------------
+hbm_05_araddr <= AXI_05_ARADDR;
+hbm_05_arburst <= AXI_05_ARBURST;
+hbm_05_arid <= AXI_05_ARID;
+hbm_05_arlen <= AXI_05_ARLEN;
+hbm_05_arsize <= AXI_05_ARSIZE;
+hbm_05_arvalid <= AXI_05_ARVALID;
+hbm_05_rready <= AXI_05_RREADY;
+hbm_05_awaddr <= AXI_05_AWADDR;
+hbm_05_awburst <= AXI_05_AWBURST;
+hbm_05_awid <= AXI_05_AWID;
+hbm_05_awlen <= AXI_05_AWLEN;
+hbm_05_awsize <= AXI_05_AWSIZE;
+hbm_05_awvalid <= AXI_05_AWVALID;
+hbm_05_wdata <= AXI_05_WDATA;
+hbm_05_wlast <= AXI_05_WLAST;
+hbm_05_wstrb <= AXI_05_WSTRB;
+hbm_05_wdata_parity <= AXI_05_WDATA_PARITY;
+hbm_05_wvalid <= AXI_05_WVALID;
+hbm_05_bready <= AXI_05_BREADY;
+
+AXI_05_ARREADY <= hbm_05_arready;
+AXI_05_RDATA_PARITY <= hbm_05_rdata_parity;
+AXI_05_RDATA <= hbm_05_rdata;
+AXI_05_RID <= hbm_05_rid;
+AXI_05_RLAST <= hbm_05_rlast;
+AXI_05_RRESP <= hbm_05_rresp;
+AXI_05_RVALID <= hbm_05_rvalid;
+AXI_05_AWREADY <= hbm_05_awready;
+AXI_05_WREADY <= hbm_05_wready;
+AXI_05_BID <= hbm_05_bid;
+AXI_05_BRESP <= hbm_05_bresp;
+AXI_05_BVALID <= hbm_05_bvalid;
+
+o_read_pkgs(5).arready <= '0';
+o_read_pkgs(5).rdata_parity <= (others => '0');
+o_read_pkgs(5).rdata <= (others => '0');
+o_read_pkgs(5).rid <= (others => '0');
+o_read_pkgs(5).rlast <= '0';
+o_read_pkgs(5).rresp <= (others => '0');
+o_read_pkgs(5).rvalid <= '0';
+o_write_pkgs(5).awready <= '0';
+o_write_pkgs(5).wready <= '0';
+o_write_pkgs(5).bid <= (others => '0');
+o_write_pkgs(5).bresp <= (others => '0');
+o_write_pkgs(5).bvalid <= '0';
+
+
+-- -------------------- AXI_06 --------------------
+hbm_06_araddr <= AXI_06_ARADDR;
+hbm_06_arburst <= AXI_06_ARBURST;
+hbm_06_arid <= AXI_06_ARID;
+hbm_06_arlen <= AXI_06_ARLEN;
+hbm_06_arsize <= AXI_06_ARSIZE;
+hbm_06_arvalid <= AXI_06_ARVALID;
+hbm_06_rready <= AXI_06_RREADY;
+hbm_06_awaddr <= AXI_06_AWADDR;
+hbm_06_awburst <= AXI_06_AWBURST;
+hbm_06_awid <= AXI_06_AWID;
+hbm_06_awlen <= AXI_06_AWLEN;
+hbm_06_awsize <= AXI_06_AWSIZE;
+hbm_06_awvalid <= AXI_06_AWVALID;
+hbm_06_wdata <= AXI_06_WDATA;
+hbm_06_wlast <= AXI_06_WLAST;
+hbm_06_wstrb <= AXI_06_WSTRB;
+hbm_06_wdata_parity <= AXI_06_WDATA_PARITY;
+hbm_06_wvalid <= AXI_06_WVALID;
+hbm_06_bready <= AXI_06_BREADY;
+
+AXI_06_ARREADY <= hbm_06_arready;
+AXI_06_RDATA_PARITY <= hbm_06_rdata_parity;
+AXI_06_RDATA <= hbm_06_rdata;
+AXI_06_RID <= hbm_06_rid;
+AXI_06_RLAST <= hbm_06_rlast;
+AXI_06_RRESP <= hbm_06_rresp;
+AXI_06_RVALID <= hbm_06_rvalid;
+AXI_06_AWREADY <= hbm_06_awready;
+AXI_06_WREADY <= hbm_06_wready;
+AXI_06_BID <= hbm_06_bid;
+AXI_06_BRESP <= hbm_06_bresp;
+AXI_06_BVALID <= hbm_06_bvalid;
+
+o_read_pkgs(6).arready <= '0';
+o_read_pkgs(6).rdata_parity <= (others => '0');
+o_read_pkgs(6).rdata <= (others => '0');
+o_read_pkgs(6).rid <= (others => '0');
+o_read_pkgs(6).rlast <= '0';
+o_read_pkgs(6).rresp <= (others => '0');
+o_read_pkgs(6).rvalid <= '0';
+o_write_pkgs(6).awready <= '0';
+o_write_pkgs(6).wready <= '0';
+o_write_pkgs(6).bid <= (others => '0');
+o_write_pkgs(6).bresp <= (others => '0');
+o_write_pkgs(6).bvalid <= '0';
+
+
+-- -------------------- AXI_07 --------------------
+hbm_07_araddr <= AXI_07_ARADDR;
+hbm_07_arburst <= AXI_07_ARBURST;
+hbm_07_arid <= AXI_07_ARID;
+hbm_07_arlen <= AXI_07_ARLEN;
+hbm_07_arsize <= AXI_07_ARSIZE;
+hbm_07_arvalid <= AXI_07_ARVALID;
+hbm_07_rready <= AXI_07_RREADY;
+hbm_07_awaddr <= AXI_07_AWADDR;
+hbm_07_awburst <= AXI_07_AWBURST;
+hbm_07_awid <= AXI_07_AWID;
+hbm_07_awlen <= AXI_07_AWLEN;
+hbm_07_awsize <= AXI_07_AWSIZE;
+hbm_07_awvalid <= AXI_07_AWVALID;
+hbm_07_wdata <= AXI_07_WDATA;
+hbm_07_wlast <= AXI_07_WLAST;
+hbm_07_wstrb <= AXI_07_WSTRB;
+hbm_07_wdata_parity <= AXI_07_WDATA_PARITY;
+hbm_07_wvalid <= AXI_07_WVALID;
+hbm_07_bready <= AXI_07_BREADY;
+
+AXI_07_ARREADY <= hbm_07_arready;
+AXI_07_RDATA_PARITY <= hbm_07_rdata_parity;
+AXI_07_RDATA <= hbm_07_rdata;
+AXI_07_RID <= hbm_07_rid;
+AXI_07_RLAST <= hbm_07_rlast;
+AXI_07_RRESP <= hbm_07_rresp;
+AXI_07_RVALID <= hbm_07_rvalid;
+AXI_07_AWREADY <= hbm_07_awready;
+AXI_07_WREADY <= hbm_07_wready;
+AXI_07_BID <= hbm_07_bid;
+AXI_07_BRESP <= hbm_07_bresp;
+AXI_07_BVALID <= hbm_07_bvalid;
+
+o_read_pkgs(7).arready <= '0';
+o_read_pkgs(7).rdata_parity <= (others => '0');
+o_read_pkgs(7).rdata <= (others => '0');
+o_read_pkgs(7).rid <= (others => '0');
+o_read_pkgs(7).rlast <= '0';
+o_read_pkgs(7).rresp <= (others => '0');
+o_read_pkgs(7).rvalid <= '0';
+o_write_pkgs(7).awready <= '0';
+o_write_pkgs(7).wready <= '0';
+o_write_pkgs(7).bid <= (others => '0');
+o_write_pkgs(7).bresp <= (others => '0');
+o_write_pkgs(7).bvalid <= '0';
+
+
+-- -------------------- AXI_08 --------------------
+hbm_08_araddr <= AXI_08_ARADDR;
+hbm_08_arburst <= AXI_08_ARBURST;
+hbm_08_arid <= AXI_08_ARID;
+hbm_08_arlen <= AXI_08_ARLEN;
+hbm_08_arsize <= AXI_08_ARSIZE;
+hbm_08_arvalid <= AXI_08_ARVALID;
+hbm_08_rready <= AXI_08_RREADY;
+hbm_08_awaddr <= AXI_08_AWADDR;
+hbm_08_awburst <= AXI_08_AWBURST;
+hbm_08_awid <= AXI_08_AWID;
+hbm_08_awlen <= AXI_08_AWLEN;
+hbm_08_awsize <= AXI_08_AWSIZE;
+hbm_08_awvalid <= AXI_08_AWVALID;
+hbm_08_wdata <= AXI_08_WDATA;
+hbm_08_wlast <= AXI_08_WLAST;
+hbm_08_wstrb <= AXI_08_WSTRB;
+hbm_08_wdata_parity <= AXI_08_WDATA_PARITY;
+hbm_08_wvalid <= AXI_08_WVALID;
+hbm_08_bready <= AXI_08_BREADY;
+
+AXI_08_ARREADY <= hbm_08_arready;
+AXI_08_RDATA_PARITY <= hbm_08_rdata_parity;
+AXI_08_RDATA <= hbm_08_rdata;
+AXI_08_RID <= hbm_08_rid;
+AXI_08_RLAST <= hbm_08_rlast;
+AXI_08_RRESP <= hbm_08_rresp;
+AXI_08_RVALID <= hbm_08_rvalid;
+AXI_08_AWREADY <= hbm_08_awready;
+AXI_08_WREADY <= hbm_08_wready;
+AXI_08_BID <= hbm_08_bid;
+AXI_08_BRESP <= hbm_08_bresp;
+AXI_08_BVALID <= hbm_08_bvalid;
+
+o_read_pkgs(8).arready <= '0';
+o_read_pkgs(8).rdata_parity <= (others => '0');
+o_read_pkgs(8).rdata <= (others => '0');
+o_read_pkgs(8).rid <= (others => '0');
+o_read_pkgs(8).rlast <= '0';
+o_read_pkgs(8).rresp <= (others => '0');
+o_read_pkgs(8).rvalid <= '0';
+o_write_pkgs(8).awready <= '0';
+o_write_pkgs(8).wready <= '0';
+o_write_pkgs(8).bid <= (others => '0');
+o_write_pkgs(8).bresp <= (others => '0');
+o_write_pkgs(8).bvalid <= '0';
+
+
+-- -------------------- AXI_09 --------------------
+hbm_09_araddr <= AXI_09_ARADDR;
+hbm_09_arburst <= AXI_09_ARBURST;
+hbm_09_arid <= AXI_09_ARID;
+hbm_09_arlen <= AXI_09_ARLEN;
+hbm_09_arsize <= AXI_09_ARSIZE;
+hbm_09_arvalid <= AXI_09_ARVALID;
+hbm_09_rready <= AXI_09_RREADY;
+hbm_09_awaddr <= AXI_09_AWADDR;
+hbm_09_awburst <= AXI_09_AWBURST;
+hbm_09_awid <= AXI_09_AWID;
+hbm_09_awlen <= AXI_09_AWLEN;
+hbm_09_awsize <= AXI_09_AWSIZE;
+hbm_09_awvalid <= AXI_09_AWVALID;
+hbm_09_wdata <= AXI_09_WDATA;
+hbm_09_wlast <= AXI_09_WLAST;
+hbm_09_wstrb <= AXI_09_WSTRB;
+hbm_09_wdata_parity <= AXI_09_WDATA_PARITY;
+hbm_09_wvalid <= AXI_09_WVALID;
+hbm_09_bready <= AXI_09_BREADY;
+
+AXI_09_ARREADY <= hbm_09_arready;
+AXI_09_RDATA_PARITY <= hbm_09_rdata_parity;
+AXI_09_RDATA <= hbm_09_rdata;
+AXI_09_RID <= hbm_09_rid;
+AXI_09_RLAST <= hbm_09_rlast;
+AXI_09_RRESP <= hbm_09_rresp;
+AXI_09_RVALID <= hbm_09_rvalid;
+AXI_09_AWREADY <= hbm_09_awready;
+AXI_09_WREADY <= hbm_09_wready;
+AXI_09_BID <= hbm_09_bid;
+AXI_09_BRESP <= hbm_09_bresp;
+AXI_09_BVALID <= hbm_09_bvalid;
+
+o_read_pkgs(9).arready <= '0';
+o_read_pkgs(9).rdata_parity <= (others => '0');
+o_read_pkgs(9).rdata <= (others => '0');
+o_read_pkgs(9).rid <= (others => '0');
+o_read_pkgs(9).rlast <= '0';
+o_read_pkgs(9).rresp <= (others => '0');
+o_read_pkgs(9).rvalid <= '0';
+o_write_pkgs(9).awready <= '0';
+o_write_pkgs(9).wready <= '0';
+o_write_pkgs(9).bid <= (others => '0');
+o_write_pkgs(9).bresp <= (others => '0');
+o_write_pkgs(9).bvalid <= '0';
+
+
+-- -------------------- AXI_10 --------------------
+hbm_10_araddr <= AXI_10_ARADDR;
+hbm_10_arburst <= AXI_10_ARBURST;
+hbm_10_arid <= AXI_10_ARID;
+hbm_10_arlen <= AXI_10_ARLEN;
+hbm_10_arsize <= AXI_10_ARSIZE;
+hbm_10_arvalid <= AXI_10_ARVALID;
+hbm_10_rready <= AXI_10_RREADY;
+hbm_10_awaddr <= AXI_10_AWADDR;
+hbm_10_awburst <= AXI_10_AWBURST;
+hbm_10_awid <= AXI_10_AWID;
+hbm_10_awlen <= AXI_10_AWLEN;
+hbm_10_awsize <= AXI_10_AWSIZE;
+hbm_10_awvalid <= AXI_10_AWVALID;
+hbm_10_wdata <= AXI_10_WDATA;
+hbm_10_wlast <= AXI_10_WLAST;
+hbm_10_wstrb <= AXI_10_WSTRB;
+hbm_10_wdata_parity <= AXI_10_WDATA_PARITY;
+hbm_10_wvalid <= AXI_10_WVALID;
+hbm_10_bready <= AXI_10_BREADY;
+
+AXI_10_ARREADY <= hbm_10_arready;
+AXI_10_RDATA_PARITY <= hbm_10_rdata_parity;
+AXI_10_RDATA <= hbm_10_rdata;
+AXI_10_RID <= hbm_10_rid;
+AXI_10_RLAST <= hbm_10_rlast;
+AXI_10_RRESP <= hbm_10_rresp;
+AXI_10_RVALID <= hbm_10_rvalid;
+AXI_10_AWREADY <= hbm_10_awready;
+AXI_10_WREADY <= hbm_10_wready;
+AXI_10_BID <= hbm_10_bid;
+AXI_10_BRESP <= hbm_10_bresp;
+AXI_10_BVALID <= hbm_10_bvalid;
+
+o_read_pkgs(10).arready <= '0';
+o_read_pkgs(10).rdata_parity <= (others => '0');
+o_read_pkgs(10).rdata <= (others => '0');
+o_read_pkgs(10).rid <= (others => '0');
+o_read_pkgs(10).rlast <= '0';
+o_read_pkgs(10).rresp <= (others => '0');
+o_read_pkgs(10).rvalid <= '0';
+o_write_pkgs(10).awready <= '0';
+o_write_pkgs(10).wready <= '0';
+o_write_pkgs(10).bid <= (others => '0');
+o_write_pkgs(10).bresp <= (others => '0');
+o_write_pkgs(10).bvalid <= '0';
+
+
+-- -------------------- AXI_11 --------------------
+hbm_11_araddr <= AXI_11_ARADDR;
+hbm_11_arburst <= AXI_11_ARBURST;
+hbm_11_arid <= AXI_11_ARID;
+hbm_11_arlen <= AXI_11_ARLEN;
+hbm_11_arsize <= AXI_11_ARSIZE;
+hbm_11_arvalid <= AXI_11_ARVALID;
+hbm_11_rready <= AXI_11_RREADY;
+hbm_11_awaddr <= AXI_11_AWADDR;
+hbm_11_awburst <= AXI_11_AWBURST;
+hbm_11_awid <= AXI_11_AWID;
+hbm_11_awlen <= AXI_11_AWLEN;
+hbm_11_awsize <= AXI_11_AWSIZE;
+hbm_11_awvalid <= AXI_11_AWVALID;
+hbm_11_wdata <= AXI_11_WDATA;
+hbm_11_wlast <= AXI_11_WLAST;
+hbm_11_wstrb <= AXI_11_WSTRB;
+hbm_11_wdata_parity <= AXI_11_WDATA_PARITY;
+hbm_11_wvalid <= AXI_11_WVALID;
+hbm_11_bready <= AXI_11_BREADY;
+
+AXI_11_ARREADY <= hbm_11_arready;
+AXI_11_RDATA_PARITY <= hbm_11_rdata_parity;
+AXI_11_RDATA <= hbm_11_rdata;
+AXI_11_RID <= hbm_11_rid;
+AXI_11_RLAST <= hbm_11_rlast;
+AXI_11_RRESP <= hbm_11_rresp;
+AXI_11_RVALID <= hbm_11_rvalid;
+AXI_11_AWREADY <= hbm_11_awready;
+AXI_11_WREADY <= hbm_11_wready;
+AXI_11_BID <= hbm_11_bid;
+AXI_11_BRESP <= hbm_11_bresp;
+AXI_11_BVALID <= hbm_11_bvalid;
+
+o_read_pkgs(11).arready <= '0';
+o_read_pkgs(11).rdata_parity <= (others => '0');
+o_read_pkgs(11).rdata <= (others => '0');
+o_read_pkgs(11).rid <= (others => '0');
+o_read_pkgs(11).rlast <= '0';
+o_read_pkgs(11).rresp <= (others => '0');
+o_read_pkgs(11).rvalid <= '0';
+o_write_pkgs(11).awready <= '0';
+o_write_pkgs(11).wready <= '0';
+o_write_pkgs(11).bid <= (others => '0');
+o_write_pkgs(11).bresp <= (others => '0');
+o_write_pkgs(11).bvalid <= '0';
+
+
+-- -------------------- AXI_12 --------------------
+hbm_12_araddr <= AXI_12_ARADDR;
+hbm_12_arburst <= AXI_12_ARBURST;
+hbm_12_arid <= AXI_12_ARID;
+hbm_12_arlen <= AXI_12_ARLEN;
+hbm_12_arsize <= AXI_12_ARSIZE;
+hbm_12_arvalid <= AXI_12_ARVALID;
+hbm_12_rready <= AXI_12_RREADY;
+hbm_12_awaddr <= AXI_12_AWADDR;
+hbm_12_awburst <= AXI_12_AWBURST;
+hbm_12_awid <= AXI_12_AWID;
+hbm_12_awlen <= AXI_12_AWLEN;
+hbm_12_awsize <= AXI_12_AWSIZE;
+hbm_12_awvalid <= AXI_12_AWVALID;
+hbm_12_wdata <= AXI_12_WDATA;
+hbm_12_wlast <= AXI_12_WLAST;
+hbm_12_wstrb <= AXI_12_WSTRB;
+hbm_12_wdata_parity <= AXI_12_WDATA_PARITY;
+hbm_12_wvalid <= AXI_12_WVALID;
+hbm_12_bready <= AXI_12_BREADY;
+
+AXI_12_ARREADY <= hbm_12_arready;
+AXI_12_RDATA_PARITY <= hbm_12_rdata_parity;
+AXI_12_RDATA <= hbm_12_rdata;
+AXI_12_RID <= hbm_12_rid;
+AXI_12_RLAST <= hbm_12_rlast;
+AXI_12_RRESP <= hbm_12_rresp;
+AXI_12_RVALID <= hbm_12_rvalid;
+AXI_12_AWREADY <= hbm_12_awready;
+AXI_12_WREADY <= hbm_12_wready;
+AXI_12_BID <= hbm_12_bid;
+AXI_12_BRESP <= hbm_12_bresp;
+AXI_12_BVALID <= hbm_12_bvalid;
+
+o_read_pkgs(12).arready <= '0';
+o_read_pkgs(12).rdata_parity <= (others => '0');
+o_read_pkgs(12).rdata <= (others => '0');
+o_read_pkgs(12).rid <= (others => '0');
+o_read_pkgs(12).rlast <= '0';
+o_read_pkgs(12).rresp <= (others => '0');
+o_read_pkgs(12).rvalid <= '0';
+o_write_pkgs(12).awready <= '0';
+o_write_pkgs(12).wready <= '0';
+o_write_pkgs(12).bid <= (others => '0');
+o_write_pkgs(12).bresp <= (others => '0');
+o_write_pkgs(12).bvalid <= '0';
+
+
+-- -------------------- AXI_13 --------------------
+hbm_13_araddr <= AXI_13_ARADDR;
+hbm_13_arburst <= AXI_13_ARBURST;
+hbm_13_arid <= AXI_13_ARID;
+hbm_13_arlen <= AXI_13_ARLEN;
+hbm_13_arsize <= AXI_13_ARSIZE;
+hbm_13_arvalid <= AXI_13_ARVALID;
+hbm_13_rready <= AXI_13_RREADY;
+hbm_13_awaddr <= AXI_13_AWADDR;
+hbm_13_awburst <= AXI_13_AWBURST;
+hbm_13_awid <= AXI_13_AWID;
+hbm_13_awlen <= AXI_13_AWLEN;
+hbm_13_awsize <= AXI_13_AWSIZE;
+hbm_13_awvalid <= AXI_13_AWVALID;
+hbm_13_wdata <= AXI_13_WDATA;
+hbm_13_wlast <= AXI_13_WLAST;
+hbm_13_wstrb <= AXI_13_WSTRB;
+hbm_13_wdata_parity <= AXI_13_WDATA_PARITY;
+hbm_13_wvalid <= AXI_13_WVALID;
+hbm_13_bready <= AXI_13_BREADY;
+
+AXI_13_ARREADY <= hbm_13_arready;
+AXI_13_RDATA_PARITY <= hbm_13_rdata_parity;
+AXI_13_RDATA <= hbm_13_rdata;
+AXI_13_RID <= hbm_13_rid;
+AXI_13_RLAST <= hbm_13_rlast;
+AXI_13_RRESP <= hbm_13_rresp;
+AXI_13_RVALID <= hbm_13_rvalid;
+AXI_13_AWREADY <= hbm_13_awready;
+AXI_13_WREADY <= hbm_13_wready;
+AXI_13_BID <= hbm_13_bid;
+AXI_13_BRESP <= hbm_13_bresp;
+AXI_13_BVALID <= hbm_13_bvalid;
+
+o_read_pkgs(13).arready <= '0';
+o_read_pkgs(13).rdata_parity <= (others => '0');
+o_read_pkgs(13).rdata <= (others => '0');
+o_read_pkgs(13).rid <= (others => '0');
+o_read_pkgs(13).rlast <= '0';
+o_read_pkgs(13).rresp <= (others => '0');
+o_read_pkgs(13).rvalid <= '0';
+o_write_pkgs(13).awready <= '0';
+o_write_pkgs(13).wready <= '0';
+o_write_pkgs(13).bid <= (others => '0');
+o_write_pkgs(13).bresp <= (others => '0');
+o_write_pkgs(13).bvalid <= '0';
+
+
+-- -------------------- AXI_14 --------------------
+hbm_14_araddr <= AXI_14_ARADDR;
+hbm_14_arburst <= AXI_14_ARBURST;
+hbm_14_arid <= AXI_14_ARID;
+hbm_14_arlen <= AXI_14_ARLEN;
+hbm_14_arsize <= AXI_14_ARSIZE;
+hbm_14_arvalid <= AXI_14_ARVALID;
+hbm_14_rready <= AXI_14_RREADY;
+hbm_14_awaddr <= AXI_14_AWADDR;
+hbm_14_awburst <= AXI_14_AWBURST;
+hbm_14_awid <= AXI_14_AWID;
+hbm_14_awlen <= AXI_14_AWLEN;
+hbm_14_awsize <= AXI_14_AWSIZE;
+hbm_14_awvalid <= AXI_14_AWVALID;
+hbm_14_wdata <= AXI_14_WDATA;
+hbm_14_wlast <= AXI_14_WLAST;
+hbm_14_wstrb <= AXI_14_WSTRB;
+hbm_14_wdata_parity <= AXI_14_WDATA_PARITY;
+hbm_14_wvalid <= AXI_14_WVALID;
+hbm_14_bready <= AXI_14_BREADY;
+
+AXI_14_ARREADY <= hbm_14_arready;
+AXI_14_RDATA_PARITY <= hbm_14_rdata_parity;
+AXI_14_RDATA <= hbm_14_rdata;
+AXI_14_RID <= hbm_14_rid;
+AXI_14_RLAST <= hbm_14_rlast;
+AXI_14_RRESP <= hbm_14_rresp;
+AXI_14_RVALID <= hbm_14_rvalid;
+AXI_14_AWREADY <= hbm_14_awready;
+AXI_14_WREADY <= hbm_14_wready;
+AXI_14_BID <= hbm_14_bid;
+AXI_14_BRESP <= hbm_14_bresp;
+AXI_14_BVALID <= hbm_14_bvalid;
+
+o_read_pkgs(14).arready <= '0';
+o_read_pkgs(14).rdata_parity <= (others => '0');
+o_read_pkgs(14).rdata <= (others => '0');
+o_read_pkgs(14).rid <= (others => '0');
+o_read_pkgs(14).rlast <= '0';
+o_read_pkgs(14).rresp <= (others => '0');
+o_read_pkgs(14).rvalid <= '0';
+o_write_pkgs(14).awready <= '0';
+o_write_pkgs(14).wready <= '0';
+o_write_pkgs(14).bid <= (others => '0');
+o_write_pkgs(14).bresp <= (others => '0');
+o_write_pkgs(14).bvalid <= '0';
+
+
+-- -------------------- AXI_15 --------------------
+hbm_15_araddr <= AXI_15_ARADDR;
+hbm_15_arburst <= AXI_15_ARBURST;
+hbm_15_arid <= AXI_15_ARID;
+hbm_15_arlen <= AXI_15_ARLEN;
+hbm_15_arsize <= AXI_15_ARSIZE;
+hbm_15_arvalid <= AXI_15_ARVALID;
+hbm_15_rready <= AXI_15_RREADY;
+hbm_15_awaddr <= AXI_15_AWADDR;
+hbm_15_awburst <= AXI_15_AWBURST;
+hbm_15_awid <= AXI_15_AWID;
+hbm_15_awlen <= AXI_15_AWLEN;
+hbm_15_awsize <= AXI_15_AWSIZE;
+hbm_15_awvalid <= AXI_15_AWVALID;
+hbm_15_wdata <= AXI_15_WDATA;
+hbm_15_wlast <= AXI_15_WLAST;
+hbm_15_wstrb <= AXI_15_WSTRB;
+hbm_15_wdata_parity <= AXI_15_WDATA_PARITY;
+hbm_15_wvalid <= AXI_15_WVALID;
+hbm_15_bready <= AXI_15_BREADY;
+
+AXI_15_ARREADY <= hbm_15_arready;
+AXI_15_RDATA_PARITY <= hbm_15_rdata_parity;
+AXI_15_RDATA <= hbm_15_rdata;
+AXI_15_RID <= hbm_15_rid;
+AXI_15_RLAST <= hbm_15_rlast;
+AXI_15_RRESP <= hbm_15_rresp;
+AXI_15_RVALID <= hbm_15_rvalid;
+AXI_15_AWREADY <= hbm_15_awready;
+AXI_15_WREADY <= hbm_15_wready;
+AXI_15_BID <= hbm_15_bid;
+AXI_15_BRESP <= hbm_15_bresp;
+AXI_15_BVALID <= hbm_15_bvalid;
+
+o_read_pkgs(15).arready <= '0';
+o_read_pkgs(15).rdata_parity <= (others => '0');
+o_read_pkgs(15).rdata <= (others => '0');
+o_read_pkgs(15).rid <= (others => '0');
+o_read_pkgs(15).rlast <= '0';
+o_read_pkgs(15).rresp <= (others => '0');
+o_read_pkgs(15).rvalid <= '0';
+o_write_pkgs(15).awready <= '0';
+o_write_pkgs(15).wready <= '0';
+o_write_pkgs(15).bid <= (others => '0');
+o_write_pkgs(15).bresp <= (others => '0');
+o_write_pkgs(15).bvalid <= '0';
+
+

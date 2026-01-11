@@ -154,3 +154,6 @@ set_property PACKAGE_PIN BG28 [get_ports {leds[7]}]
 
 # connect_debug_port dbg_hub/clk \
 #   [get_nets u_bd/xdma_hbm_i/clk_wiz_clk_out1]
+
+#set_clock_groups -asynchronous \ -group [get_clocks xdma_0_axi_aclk] \ -group [get_clocks apb_clk]
+set_false_path -to [get_pins -hier *tfhe_reset_n_ff1_reg/D]
