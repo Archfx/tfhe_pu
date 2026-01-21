@@ -11,14 +11,14 @@ library work;
 
 --                  ┌───────────────┐
 -- AXI from BD ───> │               │
---                  │   AXI MUX     ├──> hbm_0
+--                  │   AXI MUX     ├──> hbm_1
 -- Packages ──────> │               │
 --                  └──────^────────┘
 --                         │
 --                   HBM_RW_SELECT
 
 
-entity hbm_w_0 is
+entity hbm_w_1 is
   port (
 
     -- AXI select
@@ -604,18 +604,12 @@ entity hbm_w_0 is
 	i_write_pkgs         : in hbm_ps_in_write_pkg_arr(0 to hbm_stack_num_ps_ports - 1);
 	i_read_pkgs          : in hbm_ps_in_read_pkg_arr(0 to hbm_stack_num_ps_ports - 1);
 	o_write_pkgs         : out hbm_ps_out_write_pkg_arr(0 to hbm_stack_num_ps_ports - 1);
-	o_read_pkgs          : out hbm_ps_out_read_pkg_arr(0 to hbm_stack_num_ps_ports - 1);
-	o_initial_init_ready : out std_ulogic
+	o_read_pkgs          : out hbm_ps_out_read_pkg_arr(0 to hbm_stack_num_ps_ports - 1)
 
   );
 end entity;
 
-architecture rtl of hbm_w_0 is
-
-	signal HBM_R_SELECT        : std_ulogic;
-	signal HBM_W_SELECT        : std_ulogic;
-	signal TFHE_RESET_N : std_ulogic;
-
+architecture rtl of hbm_w_1 is
 
 	-- ==================================================
 	-- INTERNAL HBM SIGNAL DECLARATIONS (AXI_00..AXI_15)
@@ -1135,14 +1129,10 @@ architecture rtl of hbm_w_0 is
 
 begin
 
-
-	HBM_R_SELECT <= HBM_RW_SELECT(1);
-	HBM_W_SELECT <= HBM_RW_SELECT(0);
-
   ------------------------------------------------------------------
   -- HBM instance 
   ------------------------------------------------------------------
-	hbm_0_inst: hbm_0
+	hbm_1_inst: hbm_1
 		port map (
 			HBM_REF_CLK_0       => HBM_REF_CLK_0,
 			-- AXI in short: the party that sends the data sets valid='1', the party that receives the data indicates that through ready='1'
@@ -1721,9 +1711,9 @@ begin
 			-- APB_0_PRDATA        => open,
 			-- APB_0_PREADY        => open,
 			-- APB_0_PSLVERR       => open,
-			apb_complete_0      => o_initial_init_ready,
-			DRAM_0_STAT_CATTRIP => open,
-			DRAM_0_STAT_TEMP    => open
+			apb_complete_0      => apb_complete_0,
+			DRAM_0_STAT_CATTRIP => DRAM_0_STAT_CATTRIP,
+			DRAM_0_STAT_TEMP    => DRAM_0_STAT_TEMP
 		);
 
 	-- ==================================================
@@ -1731,8 +1721,7 @@ begin
 	-- ==================================================
 
 	-- Convention: select='0' => HOST owns that channel, select='1' => TFHE owns that channel
-
-	-- -------------------- AXI_00 --------------------
+	-------------------- AXI_00 --------------------
 	hbm_00_araddr <= AXI_00_ARADDR when HBM_RW_SELECT(1)='0' else std_logic_vector(i_read_pkgs(0).araddr);
 	hbm_00_arburst <= AXI_00_ARBURST when HBM_RW_SELECT(1)='0' else std_logic_vector(hbm_burstmode);
 	hbm_00_arid <= AXI_00_ARID when HBM_RW_SELECT(1)='0' else i_read_pkgs(0).arid;
@@ -2515,12 +2504,11 @@ begin
 	AXI_15_BVALID <= hbm_15_bvalid when HBM_RW_SELECT(0)='0' else '0';
 	o_write_pkgs(15).bvalid <= hbm_15_bvalid when HBM_RW_SELECT(0)='1' else '0';
 
-
 	-- ==================================================
 	-- HOST-ONLY DIRECT CONNECT (HBM <-> HOST), TFHE DISABLED
 	-- ==================================================
 
-	-- -------------------- AXI_00 --------------------
+	-- -- -------------------- AXI_00 --------------------
 	-- hbm_00_araddr <= AXI_00_ARADDR;
 	-- hbm_00_arburst <= AXI_00_ARBURST;
 	-- hbm_00_arid <= AXI_00_ARID;
@@ -3286,7 +3274,6 @@ begin
 	-- o_write_pkgs(15).bid <= (others => '0');
 	-- o_write_pkgs(15).bresp <= (others => '0');
 	-- o_write_pkgs(15).bvalid <= '0';
-
 
 
 

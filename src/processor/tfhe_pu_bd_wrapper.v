@@ -11,6 +11,8 @@ module tfhe_pu_bd_wrapper
     pcie_perstn,
     pcie_refclk_clk_n,
     pcie_refclk_clk_p,
+    hbm_ref_clk_0,
+    hbm_ref_clk_1,
     leds);
   input default_100mhz_clk_clk_n;
   input default_100mhz_clk_clk_p;
@@ -21,6 +23,8 @@ module tfhe_pu_bd_wrapper
   input pcie_perstn;
   input pcie_refclk_clk_n;
   input pcie_refclk_clk_p;
+  input hbm_ref_clk_0;
+  input hbm_ref_clk_1;
   
   output [7:0]leds;
 
@@ -44,6 +48,8 @@ module tfhe_pu_bd_wrapper
         .pcie_perstn(pcie_perstn),
         .pcie_refclk_clk_n(pcie_refclk_clk_n),
         .pcie_refclk_clk_p(pcie_refclk_clk_p),
+        .hbm_ref_clk_0(hbm_ref_clk_0),
+        .hbm_ref_clk_1(hbm_ref_clk_1),
         .leds(leds)
         );
 endmodule

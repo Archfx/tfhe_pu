@@ -3,11 +3,33 @@
 ```sh
 cd driver/dma_ip_drivers/XDMA/linux-kernel/xdma/
 sudo make install
-sudo modprobe xdma # will need to execute on reboot if not added permenanlty to the kernel
-cd driver/dma_ip_drivers/XDMA/linux-kernel/tools/
+sudo modprobe xdma # will need to execute on reboot if not added permanently to the kernel
+cd ../tools/
 make
 ```
 
+## Setting the control register
+
+First compile the controller
+
+```sh
+cd ../../../../../ # navigate to top level folder
+make
+```
+
+Then configure the processor controller
+```sh
+sudo ./control /dev/xdma0_user 0x0 0x00000000 # See section "Control and Status Register" below. Host has access to HBM stacks or change the register value accordig to the above register map
+```
+
+## Test the HBM channels from host side
+
+```sh
+chmod +x dma_test.sh
+sudo ./dma_test.sh
+```
+The test should exit successfully.
+Please remember to restart your computer (not the fpga) after programming the fpga, such that the fpga can be detected as a pcie device. Furthermore, execute "sudo modprobe xdma" beforehand in case you did not add it to the kernel permanently.
 
 ## Control and Status Register
 
@@ -25,31 +47,10 @@ Control / Status Register (slv_reg0) — 32 bits
 - Bit 3  : RS     - Reserved
 
 ### Write/ Read select for HBM <--> TFHE processor (defaults to HOST)
-- Bit 4  : WR0    - HBM write select, TFHE_PU if `1` vs Host if `0` (Stack 0)
-- Bit 5  : RD0    - HBM read  select, TFHE_PU if `1` vs Host if `0` (Stack 0)
-- Bit 6  : WR1    - HBM write select, TFHE_PU if `1` vs Host if `0` (Stack 1)
-- Bit 7  : RD1    - HBM read  select, TFHE_PU if `1` vs Host if `0` (Stack 1)
+DEPRECATED!
+Via PCIe you have write-only access to all hbm ports. The read ports are physically not connected to PCIe.
+There is one exception to this: the result channel is read-only via PCIe, the write ports are physically not connected to PCIe.
+This construction allows arbiter-free usage of the HBM by PCIe host and the accelerator engine.
 
 ### Reserved for future use
 - Bits 31:8 : Reserved (must be written as 0)
-
-
-## Setting the control register
-
-First compile the controller
-
-```sh
-make
-```
-
-Then configure the processor controller
-```sh
-sudo ./reg_rw /dev/xdma0_user 0x0 0x00000000 # Host has access to HBM stacks or change the register value accordig to the above register map
-```
-
-## Test the HBM channles from host side
-
-```sh
-chmod +x dma_test.sh
-sudo ./dma_test.sh
-```
