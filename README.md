@@ -1,7 +1,7 @@
 
 # Open-Source TFHE Accelerator (tfhe-PU)
 
-<img align="right" width="400" height="auto" alt="" src="images/tfhe-proc.png"/> This repository accompanies the paper [**“Towards a Functionally Complete and Parameterizable TFHE Processor”**]().  
+<img align="right" width="400" height="auto" alt="" src="images/tfhe-proc.png"/> This repository accompanies the paper [**“REDACTED”**]().  
 The design is written in a mix of **VHDL** and **SystemVerilog**, compatible with **Vivado 2024.1**.
 This is a fully fledged, parameterizable TFHE processor that connects via PCIe, enabling scalable, hardware-accelerated computation directly on encrypted data, achieving 240-480% higher bootstrapping throughput than current state-of-the-art designs. Hopefully, this will lay the foundation for the next generation of TFHE processors - moving us closer to practical, high-performance encrypted computing.   
 
@@ -43,7 +43,7 @@ Use Vivado with an appropriate license (specifically for HBM-supported FPGAs suc
 2. Add `vcu_128_xdc/tfhe_pu.xdc` as the constraint file (if you are not using a VCU128 FPGA you may need to edit it)
 3. Select `Tools`-->`Run Tcl Script` in the Vivado toolbar and select the file in `src/processor/tfhe_pu_bd.tcl`
 4. In Vivado IP Integrator (see Flow Navigator on the left) select `Generate Block Design` with the sythesis option `Global`
-5. Synthesize, implement, generate the bitstream, and program the FPGA. Note: after sythesis ressource usage may list IO only. Continue with implementation to see the full ressource usage. Additional node: on implementation two nets may fail, as Vivado picks unused clock sources to route these nets. Their corresponding warning can be ignored.
+5. Synthesize, implement, generate the bitstream, and program the FPGA. Node: on implementation two nets may fail, as Vivado picks unused clock sources to route these nets. Their corresponding warning can be ignored.
 6. Follow the instructions in the README in the `host` folder for the host-side setup.
 7. Enjoy the accelerated TFHE!
 
@@ -101,18 +101,7 @@ Please avoid hardcoded constants to maintain flexibility across parameter sets.
 
 
 ## Citation
-
-```tex
-@misc{häusler2025functionally,
-      title={Towards a Functionally Complete and Parameterizable TFHE Processor}, 
-      author={Valentin Reyes Häusler and Gabriel Ott and Aruna Jayasena and Andreas Peter},
-      year={2025},
-      eprint={2510.23483},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR},
-      url={https://arxiv.org/abs/2510.23483}, 
-}
-```
+REDACTED
 
 # License
 This project is licensed under MIT.
