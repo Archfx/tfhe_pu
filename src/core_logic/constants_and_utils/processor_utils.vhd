@@ -52,6 +52,7 @@ package processor_utils is
      constant bsk_hbm_num_ps_ports          : integer := 16;
      constant bsk_hbm_num_coeffs_per_clk    : integer := bsk_hbm_num_ps_ports * hbm_coeffs_per_clock_per_ps_port;
      constant bsk_hbm_coeffs_per_clk        : integer := get_min(bsk_hbm_num_coeffs_per_clk, pbs_bsk_coeffs_needed_per_clk); -- must be a power of 2
+     constant bsk_hbm_num_ports_to_use    : integer := bsk_hbm_coeffs_per_clk / hbm_coeffs_per_clock_per_ps_port;
 
      -- constants for pbs_lut_storage
      constant coeffs_per_pbs_lut : integer := num_polyms_per_rlwe_ciphertext * num_coefficients;

@@ -73,7 +73,7 @@
 ## Free Running Clock is Required for IBERT/DRP operations.
 ##
 #############################################################################################################
-create_clock -name sys_clk -period 10 [get_ports sys_clk_p]
+#create_clock -name sys_clk -period 10 [get_ports sys_clk_p]
 #
 #############################################################################################################
 set_false_path -from [get_ports sys_rst_n]
@@ -102,7 +102,7 @@ set_property LOC [get_package_pins -of_objects [get_bels [get_sites -filter {NAM
 #set_property BITSTREAM.CONFIG.UNUSEDPIN Pulldown [current_design]
 #
 #
-set_false_path -to [get_pins -hier *sync_reg[0]/D]
+#set_false_path -to [get_pins -hier *sync_reg[0]/D]
 #
 
 #---------------------- Adding waiver for exdes level constraints --------------------------------#
@@ -113,6 +113,18 @@ set_false_path -to [get_pins -hier *sync_reg[0]/D]
 
 
 ## CLK
+
+# hbm reference clock
+set_property PACKAGE_PIN BJ26 [get_ports hbm_ref_clk_0]
+set_property IOSTANDARD LVCMOS18  [get_ports hbm_ref_clk_0]
+# create_clock -name hbm_ref_clk_0 -period 10.0 [get_ports hbm_ref_clk_0]
+# set_property CLOCK_DEDICATED_ROUTE TRUE [get_ports {hbm_ref_clk_0}]
+set_property PACKAGE_PIN BH32 [get_ports hbm_ref_clk_1]
+set_property IOSTANDARD LVCMOS18  [get_ports hbm_ref_clk_1]
+# create_clock -name hbm_ref_clk_1 -period 10.0 [get_ports hbm_ref_clk_1]
+# set_property CLOCK_DEDICATED_ROUTE TRUE [get_ports {hbm_ref_clk_1}]
+
+# axi clock
 set_property IOSTANDARD LVDS [get_ports clk_pin_p]
 set_property IOSTANDARD LVDS [get_ports clk_pin_n]
 set_property PACKAGE_PIN F35 [get_ports clk_pin_p]
@@ -156,4 +168,4 @@ set_property PACKAGE_PIN BG28 [get_ports {leds[7]}]
 #   [get_nets u_bd/xdma_hbm_i/clk_wiz_clk_out1]
 
 #set_clock_groups -asynchronous \ -group [get_clocks xdma_0_axi_aclk] \ -group [get_clocks apb_clk]
-set_false_path -to [get_pins -hier *tfhe_reset_n_ff1_reg/D]
+#set_false_path -to [get_pins -hier *tfhe_reset_n_ff1_reg/D]

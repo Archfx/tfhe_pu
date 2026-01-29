@@ -34,6 +34,8 @@ module tfhe_pu_top#(
   input  sys_clk_p,
   input  sys_clk_n,
   input  sys_rst_n,
+  input  hbm_ref_clk_0,
+  input  hbm_ref_clk_1,
   
   input clk_pin_p,
   input clk_pin_n,
@@ -68,6 +70,8 @@ module tfhe_pu_top#(
     .pcie_perstn       (sys_rst_n),
     .pcie_refclk_clk_n (sys_clk_n),
     .pcie_refclk_clk_p (sys_clk_p),
+    .hbm_ref_clk_0 (hbm_ref_clk_0),
+    .hbm_ref_clk_1 (hbm_ref_clk_1),
     .leds(leds)
   );
 

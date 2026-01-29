@@ -29,30 +29,21 @@ All content is for **academic research only**, provided *as is* without warranty
 
 ## Setup Your Own tfhe-PU
 
-Clone this repositoty and initialize the sub-modules.
+Clone this repository and initialize the sub-modules.
 
 ```sh
 git clone https://github.com/Archfx/tfhe_pu
+cd tfhe_pu/
 git submodule update --init #initilize the Xilinx dma drivers repo
 ```
 
 Use Vivado with an appropriate license (specifically for HBM-supported FPGAs such as VCU128).
 
-1. Create a new project for your FPGA and import all the Verilog/SystemVerilog/VHDL modules inside the `src` folder except the modules within `testbenches`, `secondary_code`, and `deprecated` folders.
-2. Add two HBM IPs (left and right stacks) from the Vivado IP catalog and configure them with the following settings:
-   - Disable switch 0/ global addressing on stack 0/1
-   - Set the HBM memory freaquancy for the stack 0 to 500MHZ
-   - Remove the option for external `apb interface`.
-   - Under reorder, refresh and power saving options, set the traffic pattern to `LINEAR`
-   - Under realibility options, disable debug interface and error correction options including the write data mask.
-3. Import the `tfhe_pu_bd` block diagram to the project
-   - Copy the `src/processor/tfhe_pu_bd.tcl` to your Vivado Project folder
-   - Autogenerate the BD by running the following command in the TCL console:
-   ```
-   source tfhe_pu_bd.tcl
-   ```
-4. Set `tfhe_pu_top` as the top module and refresh the hierarchy.
-5. Synthesize, implement, generate the bitstream, and program the FPGA.
+1. Create a new RTL project for your FPGA and import the following folders: `src/core_logic`, `src/mmap`,`src/processor` and `src/tfhe`. This will import all the Verilog/SystemVerilog/VHDL modules from those folders.
+2. Add `vcu_128_xdc/tfhe_pu.xdc` as the constraint file (if you are not using a VCU128 FPGA you may need to edit it)
+3. Select `Tools`-->`Run Tcl Script` in the Vivado toolbar and select the file in `src/processor/tfhe_pu_bd.tcl`
+4. In Vivado IP Integrator (see Flow Navigator on the left) select `Generate Block Design` with the sythesis option `Global`
+5. Synthesize, implement, generate the bitstream, and program the FPGA. Note: after sythesis ressource usage may list IO only. Continue with implementation to see the full ressource usage. Additional node: on implementation two nets may fail, as Vivado picks unused clock sources to route these nets. Their corresponding warning can be ignored.
 6. Follow the instructions in the README in the `host` folder for the host-side setup.
 7. Enjoy the accelerated TFHE!
 
@@ -69,7 +60,7 @@ See `testbenches/ntt_tb.vhd` for an example testbench.
 - **ntt/** – Butterfly-level through full NTT implementation  
 - **constants_and_utils/** – Datatypes, constants, and utility functions (not for synthesis)  
 
-> Note: Custom 64-bit datatypes are used since Vivado 2024.1 supports only signed 32-bit integers.
+> Note: Custom 64-bit datatypes are used since Vivado 2024.1 supports only VHDL with signed 32-bit integers.
 
 ### Configurability
 

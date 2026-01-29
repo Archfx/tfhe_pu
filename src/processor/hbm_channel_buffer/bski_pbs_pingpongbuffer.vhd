@@ -17,8 +17,21 @@
 --             amortized the bski loading time.
 --             Bsk_i is required for every ciphertext of the batch. So we read bsk_i batchsize-many times before
 --             we need bsk_(i+1).
---             When using burst only every burstlen-address that this module outputs is actually read by hbm.
---             We still update the read address every clock tic in case burstlength changes.
+--             When using burst, only every burstlen-address that this module outputs is actually read by hbm.
+--             (But we still update the read address every clock tic in case burstlength changes).
+--             Buffer pattern:
+--             With reference to big design: hbm provides 64 coeffs/tic, bski_buffer must provide 128 coeffs/tic
+--             So each hbm port is requested twice to fill one buffer slot. So we read 2 sub-blocks.
+--             That is why its structured interleaved:
+--                  coefficient x | sub block 0
+--                  coefficient x+1 | sub block 1
+--                  coefficient x+2 | sub block 0
+--                  coefficient x+3 | sub block 1 and so on
+--             So inside an HBM port data must be arranged like this:
+--                  coefficient x
+--                  coefficient x+2
+--                  coefficient x+1
+--                  coefficient x+3 and so on
 -- Dependencies: see imports
 -- 
 -- Revision:
@@ -93,26 +106,23 @@ architecture Behavioral of bski_pbs_pingpongbuffer is
      constant worst_case_clks_per_bski_load     : integer := clks_per_bski_load + hbm_worst_case_delay_in_clks;
 
      signal bski_buf_input  : sub_polynom(0 to o_bski_part'length - 1);
-     signal hbm_part_buffer : sub_polynom(0 to bsk_hbm_coeffs_per_clk - 1);
      constant ping_buf_length : integer := num_blocks_per_rlwe_ciphertext;
      constant bski_buf_length : integer := 2 * ping_buf_length;
 
-     signal bski_buf_input_buf : sub_polynom(0 to bski_buf_input'length - 1);
+     signal enough_rqs_to_fill_bufs : std_ulogic_vector(0 to bsk_hbm_num_ports_to_use-1);
+     signal init_done              : std_ulogic_vector(0 to bsk_hbm_num_ports_to_use-1);
+     type bram_wr_addr_arr is array(natural range <>) of unsigned(0 to get_bit_length(bski_buf_length - 1) - 1); -- is a power of 2 --> modulos itself
+     signal bram_write_addrs      : bram_wr_addr_arr(0 to bsk_hbm_num_ports_to_use-1);
 
-     signal enough_rqs_to_fill_buf : std_ulogic;
-     signal init_done              : std_ulogic;
-     signal receive_block_cnt      : unsigned(0 to get_bit_length(bski_buf_length - 1) - 1); -- is a power of 2 --> modulos itself
-     signal rq_block_cnt           : unsigned(0 to get_bit_length(ping_buf_length - 1) - 1);
-     constant num_sub_blocks        : integer := o_bski_part'length / bsk_hbm_coeffs_per_clk;              -- is a power of 2
-     constant num_sub_blocks_coeffs : integer := get_max(1,(num_sub_blocks - 1) * bsk_hbm_coeffs_per_clk); -- is a power of 2
-     signal receive_sub_block_coeff_cnt         : unsigned(0 to get_bit_length(num_sub_blocks_coeffs) - 1);
-     signal receive_sub_block_coeff_cnt_delayed : unsigned(0 to receive_sub_block_coeff_cnt'length - 1);
-     signal rq_sub_block_cnt                    : unsigned(0 to receive_sub_block_coeff_cnt'length - 1);
+     constant num_sub_blocks        : integer := o_bski_part'length / bsk_hbm_coeffs_per_clk;
+     constant num_sub_blocks_coeffs : integer := num_sub_blocks*hbm_coeffs_per_clock_per_ps_port;
+     type rq_block_cnt_arr is array(natural range <>) of unsigned(0 to get_bit_length(ping_buf_length*num_sub_blocks - 1) - 1);
+     signal rq_block_cnts           : rq_block_cnt_arr(0 to bsk_hbm_num_ports_to_use-1);
 
-     signal out_part_cnt : unsigned(0 to receive_block_cnt'length - 1); -- modulos itself
+     type sub_block_cnt_arr is array(natural range <>) of unsigned(0 to get_max(1,get_bit_length(num_sub_blocks-1)) - 1);
+     signal receive_sub_block_cnts         : sub_block_cnt_arr(0 to bsk_hbm_num_ports_to_use-1);
 
-     signal receive_block_cnt_offset : unsigned(0 to receive_block_cnt'length - 1);
-     signal receive_block_cnt_full   : unsigned(0 to receive_block_cnt'length - 1);
+     signal out_part_cnt : unsigned(0 to bram_write_addrs(0)'length - 1); -- modulos itself
      signal out_part_cnt_offset      : unsigned(0 to out_part_cnt'length - 1);
      signal out_part_cnt_full        : unsigned(0 to out_part_cnt'length - 1);
 
@@ -120,9 +130,8 @@ architecture Behavioral of bski_pbs_pingpongbuffer is
 
      signal start_outputting : std_ulogic;
 
-     signal bski_rq_addr : hbm_ps_port_memory_address;
+     signal bski_rq_addrs : hbm_ps_port_memory_address_arr(0 to bsk_hbm_num_ports_to_use-1);
      signal hbm_part     : sub_polynom(0 to bsk_hbm_coeffs_per_clk - 1);
-     signal read_pkg     : hbm_ps_in_read_pkg;
 
      signal write_en_vec     : std_ulogic_vector(0 to o_bski_part'length - 1);
      signal write_en_vec_buf : std_ulogic_vector(0 to write_en_vec'length - 1);
@@ -134,114 +143,164 @@ begin
           assert false report "Sorry - HBM not fast enough for this configuration" severity error;
      end generate;
 
+
+     -- bsk buffer treats its hbm channels as one. Need to replicate the signal correctly with the addresses
+     -- Each bsk hbm channel is controlled independently
+     per_port_logic: for port_idx in 0 to bsk_hbm_num_ports_to_use - 1 generate
+          -- fixed values
+          o_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).arid'length)); -- we expect that the requests are handled in the same order as we send them. We dont check the ids.
+          o_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_hbm_ps_in_read_in_pkg(0).arlen'length));
+          o_hbm_ps_in_read_in_pkg(port_idx).rready  <= '1';
+          o_hbm_ps_in_read_in_pkg(port_idx).araddr(hbm_port_and_stack_addr_width - 1 downto 0) <= bsk_base_addr(hbm_port_and_stack_addr_width - 1 downto 0) + to_unsigned(port_idx, hbm_port_and_stack_addr_width); -- set the addr-bits that lead to the channel, keep the channel addr-bits
+          o_hbm_ps_in_read_in_pkg(port_idx).araddr(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width) <= bski_rq_addrs(port_idx)(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width);
+          
+          write_enable_logic: for coeff_idx in 0 to num_sub_blocks_coeffs-1 generate
+               process (i_clk) is
+               begin
+               if rising_edge(i_clk) then
+                    -- alternate between rows, the rows are interleaved so that hbm signals have to travel less distance
+                    if receive_sub_block_cnts(port_idx) = to_unsigned(coeff_idx mod num_sub_blocks, receive_sub_block_cnts(0)'length) and (i_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1') then
+                         write_en_vec(port_idx*num_sub_blocks_coeffs + coeff_idx) <= '1';
+                    else
+                         write_en_vec(port_idx*num_sub_blocks_coeffs + coeff_idx) <= '0';
+                    end if;
+               end if;
+               end process;
+          end generate;
+          receive_cnts: process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    if i_reset_n = '0' then
+                         receive_sub_block_cnts(port_idx) <= to_unsigned(0, receive_sub_block_cnts(0)'length); -- receive_sub_block_cnts keeps track of what rams to write
+                         bram_write_addrs(port_idx) <= to_unsigned(0, bram_write_addrs(0)'length); -- bram_write_addrs keeps track where to write in the ram
+                    else
+                         -- receive cnt logic
+                         if i_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1' then
+                              if receive_sub_block_cnts(port_idx) < to_unsigned(num_sub_blocks - 1, receive_sub_block_cnts(0)'length) then
+                                   receive_sub_block_cnts(port_idx) <= receive_sub_block_cnts(port_idx) + to_unsigned(1, receive_sub_block_cnts(0)'length);
+                              else
+                                   receive_sub_block_cnts(port_idx) <= to_unsigned(0, receive_sub_block_cnts(0)'length);
+
+                                   if bram_write_addrs(port_idx) < to_unsigned(bski_buf_length - 1, bram_write_addrs(0)'length) then
+                                        bram_write_addrs(port_idx) <= bram_write_addrs(port_idx) + to_unsigned(1, bram_write_addrs(0)'length);
+                                   else
+                                        bram_write_addrs(port_idx) <= to_unsigned(0, bram_write_addrs(0)'length);
+                                   end if;
+                              end if;
+                         end if;
+                    end if;
+               end if;
+          end process;
+
+          -- we assume that writing always finishes before reading
+          axi_handling: process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    if i_reset_n = '0' then
+                         enough_rqs_to_fill_bufs(port_idx) <= '0';
+                         init_done(port_idx) <= '0';
+
+                         rq_block_cnts(port_idx) <= to_unsigned(0, rq_block_cnts(0)'length); -- keeps track when to stop requesting. Could use bski_rq_addrs instead but bad if later multiple keys
+                         o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
+                         bski_rq_addrs(port_idx) <= bsk_base_addr;
+                    else
+
+                         if i_hbm_ps_in_read_out_pkg(port_idx).arready = '1' and enough_rqs_to_fill_bufs(port_idx) = '0' then
+                              -- increment request address
+                              if bski_rq_addrs(port_idx) < bsk_end_addr - to_unsigned(1, bski_rq_addrs(0)'length) then
+                                   bski_rq_addrs(port_idx) <= bski_rq_addrs(port_idx) + to_unsigned(hbm_bytes_per_ps_port, bski_rq_addrs(0)'length);
+                              else
+                                   bski_rq_addrs(port_idx) <= bsk_base_addr;
+                              end if;
+                              o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '1';
+
+                              if rq_block_cnts(port_idx) < to_unsigned(ping_buf_length*num_sub_blocks - 1, rq_block_cnts(0)'length) then
+                                   rq_block_cnts(port_idx) <= rq_block_cnts(port_idx) + to_unsigned(1, rq_block_cnts(0)'length);
+                              else
+                                   rq_block_cnts(port_idx) <= to_unsigned(0, rq_block_cnts(0)'length);
+                              end if;
+                         else
+                              o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
+                         end if;
+
+                         if out_batchsize_cnt = to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
+                              -- when read is done enable requests again
+                              enough_rqs_to_fill_bufs(port_idx) <= '0';
+                         else
+                              if rq_block_cnts(port_idx) = to_unsigned(ping_buf_length*num_sub_blocks - 1, rq_block_cnts(0)'length) then
+                                   if init_done(port_idx) = '0' then
+                                        init_done(port_idx) <= '1';
+                                   else
+                                        -- write of ping or pong is done, stop requesting
+                                        enough_rqs_to_fill_bufs(port_idx)<= '1';
+                                   end if;
+                              end if;
+                         end if;
+                    end if;
+               end if;
+          end process;
+     end generate;
+
+     -- drive constant signals on unused ports
+     deactive_ports: for port_idx in bsk_hbm_num_ports_to_use to o_hbm_ps_in_read_in_pkg'length-1 generate
+          o_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).arid'length));
+          o_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_hbm_ps_in_read_in_pkg(0).arlen'length));
+          o_hbm_ps_in_read_in_pkg(port_idx).rready  <= '0';
+          o_hbm_ps_in_read_in_pkg(port_idx).araddr <= to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).araddr'length);
+          o_hbm_ps_in_read_in_pkg(port_idx).arvalid  <= '0';
+     end generate;
+
      crtl_logic: process (i_clk) is
      begin
           if rising_edge(i_clk) then
                if i_reset_n = '0' then
-                    enough_rqs_to_fill_buf <= '0';
-
-                    out_part_cnt_offset <= to_unsigned(0, out_part_cnt_offset'length);
-                    rq_sub_block_cnt <= to_unsigned(0, rq_sub_block_cnt'length);
-                    rq_block_cnt <= to_unsigned(0, rq_block_cnt'length);
-                    init_done <= '0';
-                    read_pkg.arvalid <= '0';
-
-                    bski_rq_addr <= bsk_base_addr;
-               else
-                    if i_hbm_ps_in_read_out_pkg(0).arready = '1' and enough_rqs_to_fill_buf = '0' then
-                         -- increment request address
-                         if bski_rq_addr < bsk_end_addr - to_unsigned(1, bski_rq_addr'length) then
-                              bski_rq_addr <= bski_rq_addr + to_unsigned(hbm_bytes_per_ps_port, bski_rq_addr'length);
-                         else
-                              bski_rq_addr <= bsk_base_addr;
-                         end if;
-                         read_pkg.arvalid <= '1';
-
-                         if rq_sub_block_cnt < to_unsigned(num_sub_blocks_coeffs - 1, rq_sub_block_cnt'length) then
-                              rq_sub_block_cnt <= rq_sub_block_cnt + to_unsigned(bsk_hbm_coeffs_per_clk, rq_sub_block_cnt'length);
-                         else
-                              rq_sub_block_cnt <= to_unsigned(0, rq_sub_block_cnt'length);
-                              if rq_block_cnt < to_unsigned(ping_buf_length - 1, rq_block_cnt'length) then
-                                   rq_block_cnt <= rq_block_cnt + to_unsigned(1, rq_block_cnt'length);
-                              else
-                                   rq_block_cnt <= to_unsigned(0, rq_block_cnt'length);
-                              end if;
-                         end if;
-                    else
-                         read_pkg.arvalid <= '0';
-                    end if;
-
-                    if out_batchsize_cnt = to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
-                         enough_rqs_to_fill_buf <= '0';
-                    else
-                         if rq_block_cnt = to_unsigned(ping_buf_length - 1, rq_block_cnt'length) then
-                              if init_done = '0' then
-                                   init_done <= '1';
-                              else
-                                   enough_rqs_to_fill_buf <= '1';
-                              end if;
-                         end if;
-                    end if;
-
-               end if;
-
-               if start_outputting = '1' then
-                    if out_part_cnt < to_unsigned(ping_buf_length - 1, out_part_cnt'length) then
-                         out_part_cnt <= out_part_cnt + to_unsigned(1, out_part_cnt'length);
-                    else
-                         out_part_cnt <= to_unsigned(0, out_part_cnt'length);
-                         out_part_cnt_offset <= out_part_cnt_offset + to_unsigned(ping_buf_length, out_part_cnt_offset'length);
-                         if out_batchsize_cnt < to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
-                              out_batchsize_cnt <= out_batchsize_cnt + to_unsigned(1, out_batchsize_cnt'length);
-                         else
-                              out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
-                         end if;
-                    end if;
-               else
-                    out_part_cnt <= to_unsigned(0, out_part_cnt'length);
-                    out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
-               end if;
-
-          end if;
-     end process;
-
-     -- we expect that the requests are handled in the same order as we send them. We dont check the ids.
-     read_pkg.rready <= '1';
-     read_pkg.arid   <= std_logic_vector(to_unsigned(0, read_pkg.arid'length)); -- should not be important for this module
-     read_pkg.arlen  <= std_logic_vector(to_unsigned(bsk_burstlen, read_pkg.arlen'length));
-     read_pkg.araddr <= bski_rq_addr;
-
-     rq_and_receive_cnts: process (i_clk) is
-     begin
-          if rising_edge(i_clk) then
-               if i_reset_n = '0' then
                     o_ready_to_output <= '0';
-                    receive_block_cnt <= to_unsigned(0, receive_block_cnt'length);
-                    receive_block_cnt_offset <= to_unsigned(0, receive_block_cnt_offset'length);
-                    receive_sub_block_coeff_cnt <= to_unsigned(0, receive_sub_block_coeff_cnt'length);
                else
-                    -- receive logic
-                    if i_hbm_ps_in_read_out_pkg(0).rvalid = '1' then
-                         if receive_sub_block_coeff_cnt < to_unsigned(num_sub_blocks_coeffs - 1, receive_sub_block_coeff_cnt'length) then
-                              receive_sub_block_coeff_cnt <= receive_sub_block_coeff_cnt + to_unsigned(bsk_hbm_coeffs_per_clk, receive_sub_block_coeff_cnt'length);
-                         else
-                              receive_sub_block_coeff_cnt <= to_unsigned(0, receive_sub_block_coeff_cnt'length);
-                              if receive_block_cnt < to_unsigned(ping_buf_length - 1, receive_block_cnt'length) then
-                                   receive_block_cnt <= receive_block_cnt + to_unsigned(1, receive_block_cnt'length);
-                              else
-                                   receive_block_cnt <= to_unsigned(0, receive_block_cnt'length);
-                                   o_ready_to_output <= '1';
-                                   receive_block_cnt_offset <= receive_block_cnt_offset + to_unsigned(ping_buf_length, receive_block_cnt_offset'length);
-                              end if;
-                         end if;
+                    if bram_write_addrs(0) = to_unsigned(ping_buf_length - 1, bram_write_addrs(0)'length) then
+                         o_ready_to_output <= '1';
                     end if;
                end if;
-               bski_buf_input_buf <= bski_buf_input;
-               receive_block_cnt_full <= receive_block_cnt + receive_block_cnt_offset;
-               out_part_cnt_full <= out_part_cnt + out_part_cnt_offset;
           end if;
      end process;
+     
+     bski_brams: for coeff_idx in 0 to o_bski_part'length - 1 generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    write_en_vec_buf(coeff_idx) <= write_en_vec(coeff_idx);
+               end if;
+          end process;
+          ram_elem: manual_bram
+               generic map (
+                    addr_length         => bram_write_addrs(0)'length,
+                    ram_length          => bski_buf_length,
+                    ram_out_bufs_length => default_ram_retiming_latency,
+                    ram_type            => ram_style_bram,
+                    coeff_bit_width     => bski_buf_input(0)'length
+               )
+               port map (
+                    i_clk     => i_clk,
+                    i_wr_en   => write_en_vec_buf(coeff_idx),
+                    i_wr_data => bski_buf_input(coeff_idx),
+                    i_wr_addr => bram_write_addrs(coeff_idx / num_sub_blocks_coeffs), -- division without rounding, only the integer part counts
+                    i_rd_addr => out_part_cnt_full,
+                    o_data    => o_bski_part(coeff_idx)
+               );
+     end generate;
 
+     bits2coeffs: for coeff_idx in 0 to hbm_part'length - 1 generate
+          bits2bits: for bit_idx in 0 to hbm_part(0)'length - 1 generate
+               hbm_part(coeff_idx)(bit_idx) <= i_hbm_ps_in_read_out_pkg(coeff_idx / hbm_coeffs_per_clock_per_ps_port).rdata((coeff_idx mod hbm_coeffs_per_clock_per_ps_port) * hbm_part(0)'length + bit_idx);
+          end generate;
+     end generate;
+     -- ignore excess coefficients when not all of the hbm stack is needed
+     map_hbm_out_to_buf_input: for coeff_idx in 0 to hbm_part'length-1 generate
+          coeff_spread: for sub_block_idx in 0 to num_sub_blocks-1 generate
+               bski_buf_input(coeff_idx*num_sub_blocks+sub_block_idx) <= hbm_part(coeff_idx);
+          end generate;
+     end generate;
+
+     -- when reading from the buffer treat all hbm-channel-buffers like one
      initial_latency_counter: one_time_counter
           generic map (
                tripping_value     => blind_rot_iter_latency_till_elem_wise_mult - default_ram_retiming_latency - 1,
@@ -253,65 +312,31 @@ begin
                i_reset   => i_pbs_reset,
                o_tripped => start_outputting
           );
-
-     bski_brams: for coeff_idx in 0 to o_bski_part'length - 1 generate
-          process (i_clk) is
-          begin
-               if rising_edge(i_clk) then
-                    if receive_sub_block_coeff_cnt = to_unsigned(coeff_idx - coeff_idx mod bsk_hbm_coeffs_per_clk, receive_sub_block_coeff_cnt'length) then
-                         write_en_vec(coeff_idx) <= '1';
-                    else
-                         write_en_vec(coeff_idx) <= '0';
-                    end if;
-                    write_en_vec_buf(coeff_idx) <= write_en_vec(coeff_idx);
-               end if;
-          end process;
-          ram_elem: manual_bram
-               generic map (
-                    addr_length         => receive_block_cnt_full'length,
-                    ram_length          => bski_buf_length,
-                    ram_out_bufs_length => default_ram_retiming_latency,
-                    ram_type            => ram_style_bram,
-                    coeff_bit_width     => bski_buf_input(0)'length
-               )
-               port map (
-                    i_clk     => i_clk,
-                    i_wr_en   => write_en_vec_buf(coeff_idx),
-                    i_wr_data => bski_buf_input_buf(coeff_idx),
-                    i_wr_addr => receive_block_cnt_full,
-                    i_rd_addr => out_part_cnt_full,
-                    o_data    => o_bski_part(coeff_idx)
-               );
-     end generate;
-
-     bits2coeffs: for coeff_idx in 0 to hbm_part'length - 1 generate
-          bits2bits: for bit_idx in 0 to hbm_part(0)'length - 1 generate
-               hbm_part(coeff_idx)(bit_idx) <= i_hbm_ps_in_read_out_pkg(coeff_idx / hbm_coeffs_per_clock_per_ps_port).rdata((coeff_idx mod hbm_coeffs_per_clock_per_ps_port) * hbm_part(0)'length + bit_idx);
-          end generate;
-     end generate;
-
-     input_buffer: process (i_clk) is
+     -- read batchsize-many times from the same buffer before switching
+     read_from_buf_logic: process (i_clk) is
      begin
           if rising_edge(i_clk) then
-               hbm_part_buffer <= hbm_part;
-               receive_sub_block_coeff_cnt_delayed <= receive_sub_block_coeff_cnt;
-               if i_hbm_ps_in_read_out_pkg(0).rvalid = '1' then
-                    for i in 0 to bsk_hbm_coeffs_per_clk - 1 loop
-                         bski_buf_input(i + to_integer(receive_sub_block_coeff_cnt_delayed)) <= hbm_part_buffer(i);
-                    end loop;
+               if i_reset_n = '0' then
+                    out_part_cnt_offset <= to_unsigned(0, out_part_cnt_offset'length);
+                    out_part_cnt <= to_unsigned(0, out_part_cnt'length);
+                    out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
+               else
+                    if start_outputting = '1' then
+                         if out_part_cnt < to_unsigned(ping_buf_length - 1, out_part_cnt'length) then
+                              out_part_cnt <= out_part_cnt + to_unsigned(1, out_part_cnt'length);
+                         else
+                              out_part_cnt <= to_unsigned(0, out_part_cnt'length);
+                              if out_batchsize_cnt < to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
+                                   out_batchsize_cnt <= out_batchsize_cnt + to_unsigned(1, out_batchsize_cnt'length);
+                              else
+                                   out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
+                                   out_part_cnt_offset <= out_part_cnt_offset + to_unsigned(ping_buf_length, out_part_cnt_offset'length);
+                              end if;
+                         end if;
+                    end if;
                end if;
+               out_part_cnt_full <= out_part_cnt + out_part_cnt_offset;
           end if;
      end process;
-
-     -- bsk buffer treats its hbm channels as one. Need to replicate the signal correctly with the addresses
-     one_port_to_many: for port_idx in 0 to o_hbm_ps_in_read_in_pkg'length - 1 generate
-          o_hbm_ps_in_read_in_pkg(port_idx).arid    <= read_pkg.arid;
-          o_hbm_ps_in_read_in_pkg(port_idx).arlen   <= read_pkg.arlen;
-          o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= read_pkg.arvalid;
-          o_hbm_ps_in_read_in_pkg(port_idx).rready  <= read_pkg.rready;
-          -- set the addr-bits that lead to the channel, keep the channel addr-bits
-          o_hbm_ps_in_read_in_pkg(port_idx).araddr(hbm_port_and_stack_addr_width - 1 downto 0)                                        <= bsk_base_addr(hbm_port_and_stack_addr_width - 1 downto 0) + to_unsigned(port_idx, hbm_port_and_stack_addr_width);
-          o_hbm_ps_in_read_in_pkg(port_idx).araddr(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width) <= read_pkg.araddr(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width);
-     end generate;
 
 end architecture;
