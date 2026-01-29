@@ -39,14 +39,14 @@ git submodule update --init #initilize the Xilinx dma drivers repo
 
 Use Vivado with an appropriate license (specifically for HBM-supported FPGAs such as VCU128).
 
-1. Create a new RTL project for your FPGA and import the following folders: `src/core_logic`, `src/mmap`,`src/processor` and `src/tfhe`. This will impoert all the Verilog/SystemVerilog/VHDL modules from those folders.
+1. Create a new RTL project for your FPGA and import the following folders: `src/core_logic`, `src/mmap`,`src/processor` and `src/tfhe`. This will import all the Verilog/SystemVerilog/VHDL modules from those folders.
 2. Add `vcu_128_xdc/tfhe_pu.xdc` as the constraint file
 3. Copy the `src/processor/tfhe_pu_bd.tcl` to your Vivado Project folder where the <your_project_name>.xpr file is. In the tcl console, use pwd and cd commands to navigate to this tcl file (we can't give more guidance since Vivados current working directory depends on from where you launch Vivado).
 4. Autogenerate the BD and configure the design by running the following command in the TCL console:
    ```
    source tfhe_pu_bd.tcl
    ```
-5. Synthesize, implement, generate the bitstream, and program the FPGA. Note: after sythesis ressource usage may list IO only. Continue with implementation to see the full ressource usage.
+5. Synthesize, implement, generate the bitstream, and program the FPGA. Note: after sythesis ressource usage may list IO only. Continue with implementation to see the full ressource usage. Additional node: on implementation two nets may fail, as Vivado picks unused clock sources to route these nets. Their corresponding warning can be ignored.
 6. Follow the instructions in the README in the `host` folder for the host-side setup.
 7. Enjoy the accelerated TFHE!
 
