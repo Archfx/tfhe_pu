@@ -32,7 +32,7 @@ All content is for **academic research only**, provided *as is* without warranty
 Clone this repository and initialize the sub-modules.
 
 ```sh
-git clone https://github.com/Archfx/tfhe_pu
+git clone https://github.com/CeresB/tfhe-processor-artifacts
 cd tfhe_pu/
 git submodule update --init #initilize the Xilinx dma drivers repo
 ```
@@ -43,7 +43,7 @@ Use Vivado with an appropriate license (specifically for HBM-supported FPGAs suc
 2. Add `vcu_128_xdc/tfhe_pu.xdc` as the constraint file (if you are not using a VCU128 FPGA you may need to edit it)
 3. Select `Tools`-->`Run Tcl Script` in the Vivado toolbar and select the file in `src/processor/tfhe_pu_bd.tcl`
 4. In Vivado IP Integrator (see Flow Navigator on the left) select `Generate Block Design` with the sythesis option `Global`
-5. Synthesize, implement, generate the bitstream, and program the FPGA. Node: on implementation two nets may fail, as Vivado picks unused clock sources to route these nets. Their corresponding warning can be ignored.
+5. Synthesize, implement, generate the bitstream, and program the FPGA. Note: on implementation two nets that pass routing may fail, as Vivado picks unused clock sources to route these nets. This is ok and can be downgraded to a warning.
 6. Follow the instructions in the README in the `host` folder for the host-side setup.
 7. Enjoy the accelerated TFHE!
 
@@ -110,4 +110,6 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
+
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
