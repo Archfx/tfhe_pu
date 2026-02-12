@@ -95,6 +95,7 @@ architecture Behavioral of ntt_out_buf is
      type bram_addr_cnt_arr is array (natural range <>) of unsigned(0 to get_bit_length(polyms_per_ciphertext - 1) - 1);
      signal wr_en_cnt : bram_addr_cnt_arr(0 to ram_wr_addr'length - 1);
 
+     signal internal_reset_chain : std_ulogic_vector(0 to ntt_out_buf_reset_buf_len-1*boolean'pos(not use_ntt_out_buf_input_buffer)-1);
      signal internal_reset : std_ulogic;
      signal ram_input      : sub_polynom(0 to num_ram_blocks - 1);
      signal input_buf      : sub_polynom(0 to i_result_ntt'length - 1);
@@ -104,17 +105,24 @@ begin
      with_in_buf: if use_ntt_out_buf_input_buffer generate
           process (i_clk) is
           begin
-               if rising_edge(i_clk) then
-                    input_buf <= i_result_ntt;
-                    internal_reset <= i_reset;
-               end if;
+          if rising_edge(i_clk) then
+               input_buf <= i_result_ntt;
+          end if;
           end process;
      end generate;
      no_in_buf: if not use_ntt_out_buf_input_buffer generate
           input_buf <= i_result_ntt;
-          internal_reset <= i_reset;
      end generate;
+     process (i_clk) is
+     begin
+          if rising_edge(i_clk) then
+               internal_reset_chain(0) <= i_reset;
+               internal_reset_chain(1 to internal_reset_chain'length-1) <= internal_reset_chain(0 to internal_reset_chain'length-2);
+          end if;
+     end process;
+     internal_reset <= internal_reset_chain(internal_reset_chain'length-1);
 
+     -- all buffers get the same input and we just toggle the write enable
      input_buf_map: for k_idx in 0 to polyms_per_ciphertext - 1 generate
           ram_input(k_idx * input_buf'length to (k_idx + 1) * input_buf'length - 1) <= input_buf;
      end generate;
@@ -147,23 +155,21 @@ begin
                     if internal_reset = '1' then
                          wr_en_cnt(L_coeff_k_idx) <= to_unsigned(0, wr_en_cnt(0)'length);
                          ram_wr_en(L_coeff_k_idx) <= '0';
-                         ram_rd_addr(L_coeff_k_idx) <= to_unsigned(0, ram_rd_addr(0)'length);
-                         ram_wr_addr(L_coeff_k_idx) <= to_unsigned(0, ram_wr_addr(0)'length);
+                         ram_rd_addr(L_coeff_k_idx) <= to_unsigned(ping_buffer_length - 1, ram_rd_addr(0)'length);
+                         ram_wr_addr(L_coeff_k_idx) <= to_unsigned(ping_buffer_length - 1, ram_wr_addr(0)'length);
                          ram_rd_addr_offset(L_coeff_k_idx) <= to_unsigned(ping_buffer_length, ram_wr_addr(0)'length);
                          -- instead of checking when this ram block has wr_en active, we give it an offset
                          ram_wr_addr_offset(L_coeff_k_idx) <= to_unsigned(0, ram_wr_addr(0)'length);
                     else
-                         if ram_rd_addr(L_coeff_k_idx) < to_unsigned(ping_buffer_length - 1, ram_rd_addr(0)'length) then
-                              ram_rd_addr(L_coeff_k_idx) <= ram_rd_addr(L_coeff_k_idx) + to_unsigned(1, ram_rd_addr(0)'length);
+                         if ram_rd_addr(L_coeff_k_idx) = 0 then
+                              ram_rd_addr(L_coeff_k_idx) <= to_unsigned(ping_buffer_length - 1, ram_rd_addr(0)'length);
                          else
-                              ram_rd_addr(L_coeff_k_idx) <= to_unsigned(0, ram_rd_addr(0)'length);
+                              ram_rd_addr(L_coeff_k_idx) <= ram_rd_addr(L_coeff_k_idx) - to_unsigned(1, ram_rd_addr(0)'length);
                          end if;
 
-                         if ram_wr_addr(L_coeff_k_idx) < to_unsigned(ping_buffer_length - 1, ram_wr_addr(0)'length) then
-                              ram_wr_addr(L_coeff_k_idx) <= ram_wr_addr(L_coeff_k_idx) + to_unsigned(1, ram_wr_addr(0)'length);
-                         else
-                              ram_wr_addr(L_coeff_k_idx) <= to_unsigned(0, ram_wr_addr(0)'length);
-
+                         if ram_wr_addr(L_coeff_k_idx) = 0 then
+                              ram_wr_addr(L_coeff_k_idx) <= to_unsigned(ping_buffer_length - 1, ram_wr_addr(0)'length);
+                              
                               if wr_en_cnt(L_coeff_k_idx) < to_unsigned(polyms_per_ciphertext - 1, wr_en_cnt(0)'length) then
                                    wr_en_cnt(L_coeff_k_idx) <= wr_en_cnt(L_coeff_k_idx) + to_unsigned(1, wr_en_cnt(0)'length);
                               else
@@ -173,6 +179,8 @@ begin
                               if wr_en_cnt(L_coeff_k_idx) = to_unsigned(k_idx, wr_en_cnt(0)'length) then
                                    ram_wr_addr_offset(L_coeff_k_idx) <= ram_wr_addr_offset(L_coeff_k_idx) + to_unsigned(ping_buffer_length, ram_wr_addr_offset(0)'length);
                               end if;
+                         else
+                              ram_wr_addr(L_coeff_k_idx) <= ram_wr_addr(L_coeff_k_idx) - to_unsigned(1, ram_wr_addr(0)'length);
                          end if;
 
                          if wr_en_cnt(L_coeff_k_idx) = to_unsigned(k_idx, wr_en_cnt(0)'length) then

@@ -108,7 +108,7 @@ architecture Behavioral of mult_x_ai_minus_1_plus_acc is
           );
      end component;
 
-     constant acc_old_minus_acc_part_buffer_length : integer := rotate_with_buffer_latency - clks_per_64_bit_add_mod - x_ai_minus_1_buf_ram_retiming_latency; -- -x_ai_minus_1_buf_ram_retiming_latency because end part is handled seperatly
+     constant acc_old_minus_acc_part_buffer_length : integer := rotate_with_buffer_latency - clks_per_64_bit_add_mod - x_ai_minus_1_sub_buf_ram_retiming_latency; -- -x_ai_minus_1_buf_ram_retiming_latency because end part is handled seperatly
 
      signal polym_part_rolled : sub_polynom(0 to throughput - 1);
      -- rotate_polynom does also a 64-bit add, so rotate polynom will never finish before our 64-bit sub
@@ -116,12 +116,30 @@ architecture Behavioral of mult_x_ai_minus_1_plus_acc is
      signal acc_old_minus_acc_part_buffer_old_part : sub_polynom(0 to throughput - 1);
      
      type buffer_cnt_buf is array (natural range <>) of unsigned(0 to get_bit_length(acc_old_minus_acc_part_buffer_length - 1) - 1);
-     signal buffer_cnt : buffer_cnt_buf(0 to counter_buffer_len-1);
+     signal buffer_cnt : unsigned(0 to get_bit_length(acc_old_minus_acc_part_buffer_length - 1)-1) := to_unsigned(0, get_bit_length(acc_old_minus_acc_part_buffer_length - 1));
+     signal buffer_cnt_chain : buffer_cnt_buf(0 to counter_buffer_len-2); -- -2 since chain_end handled separately
+     signal buffer_cnt_chain_end : unsigned(0 to buffer_cnt'length-1);
 
      signal latency_cnt_reset : std_ulogic;
-     signal buffer_cnt_reset  : std_ulogic;
+     
+     signal internal_reset_chain : std_ulogic_vector(0 to ntt_cnts_early_reset - 1);
+     signal internal_reset       : std_ulogic;
 
 begin
+
+     reset_chain: if internal_reset_chain'length > 0 generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    internal_reset_chain(0) <= i_reset;
+                    internal_reset_chain(1 to internal_reset_chain'length - 1) <= internal_reset_chain(0 to internal_reset_chain'length - 2);
+               end if;
+          end process;
+          internal_reset <= internal_reset_chain(internal_reset_chain'length - 1);
+     end generate;
+     no_reset_chain: if not (internal_reset_chain'length > 0) generate
+          internal_reset <= i_reset;
+     end generate;
 
      rotate_with_buf: rotate_polym_with_buffer
           generic map (
@@ -133,7 +151,7 @@ begin
           )
           port map (
                i_clk               => i_clk,
-               i_reset             => i_reset,
+               i_reset             => internal_reset,
                i_sub_polym         => i_sub_polym,
                i_rotate_by         => i_ai,
                o_result            => polym_part_rolled,
@@ -180,48 +198,36 @@ begin
                o_tripped => o_next_module_reset
           );
 
-     initial_latency_counter_2: one_time_counter
-          generic map (
-               tripping_value     => clks_per_64_bit_add_mod-(counter_buffer_len-1),
-               out_negated        => true,
-               bufferchain_length => trailing_reset_buffer_len
-          )
-          port map (
-               i_clk     => i_clk,
-               i_reset   => i_reset,
-               o_tripped => buffer_cnt_reset
-          );
-
      process (i_clk)
      begin
           if rising_edge(i_clk) then
-               if buffer_cnt_reset = '1' then
-                    buffer_cnt(0) <= to_unsigned(0, buffer_cnt(0)'length);
+               if buffer_cnt = 0 then
+                    buffer_cnt <= to_unsigned(acc_old_minus_acc_part_buffer_length - 1, buffer_cnt'length);
                else
-                    if buffer_cnt(0) < to_unsigned(acc_old_minus_acc_part_buffer_length - 1, buffer_cnt(0)'length) then
-                         buffer_cnt(0) <= buffer_cnt(0) + to_unsigned(1, buffer_cnt(0)'length);
-                    else
-                         buffer_cnt(0) <= to_unsigned(0, buffer_cnt(0)'length);
-                    end if;
+                    buffer_cnt <= buffer_cnt - to_unsigned(1, buffer_cnt'length);
                end if;
           end if;
      end process;
-     
-     cnt_buf: if buffer_cnt'length > 1 generate
-          process (i_clk) is
+     do_buffer_cnt_chain: if buffer_cnt_chain 'length > 0 generate
+          process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    buffer_cnt(1 to buffer_cnt'length-1) <= buffer_cnt(0 to buffer_cnt'length-2);
+                    buffer_cnt_chain(0) <= buffer_cnt;
+                    buffer_cnt_chain(1 to buffer_cnt_chain'length - 1) <= buffer_cnt_chain(0 to buffer_cnt_chain'length - 2);
                end if;
           end process;
+          buffer_cnt_chain_end <= buffer_cnt_chain(buffer_cnt_chain'length-1);
+     end generate;
+     no_buffer_cnt_chain: if not (buffer_cnt_chain'length > 0) generate
+          buffer_cnt_chain_end <= buffer_cnt;
      end generate;
 
      brams_per_coeff: for coeff_idx in 0 to acc_old_minus_acc_part'length - 1 generate
           ram_elem: manual_bram
                generic map (
-                    addr_length         => buffer_cnt(0)'length,
+                    addr_length         => buffer_cnt'length,
                     ram_length          => acc_old_minus_acc_part_buffer_length,
-                    ram_out_bufs_length => x_ai_minus_1_buf_ram_retiming_latency,
+                    ram_out_bufs_length => x_ai_minus_1_sub_buf_ram_retiming_latency,
                     ram_type            => acc_old_buffer_ram_type,
                     coeff_bit_width     => acc_old_minus_acc_part(0)'length
                )
@@ -229,8 +235,8 @@ begin
                     i_clk     => i_clk,
                     i_wr_en   => '1',
                     i_wr_data => acc_old_minus_acc_part(coeff_idx),
-                    i_wr_addr => buffer_cnt(buffer_cnt'length-1),
-                    i_rd_addr => buffer_cnt(buffer_cnt'length-1),
+                    i_wr_addr => buffer_cnt_chain_end,
+                    i_rd_addr => buffer_cnt_chain_end,
                     o_data    => acc_old_minus_acc_part_buffer_old_part(coeff_idx)
                );
      end generate;

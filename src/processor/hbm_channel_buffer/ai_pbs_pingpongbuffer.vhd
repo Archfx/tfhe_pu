@@ -122,9 +122,12 @@ architecture Behavioral of ai_pbs_pingpongbuffer is
      type out_cnt_arr is array(natural range <>) of unsigned(0 to out_part_cnt'length-1);
      signal out_part_cnt_buf_chain: out_cnt_arr(0 to default_ram_retiming_latency-1);
 
+     signal ready_to_output_buf: std_ulogic_vector(0 to ai_buffer_output_buffer-1);
+
 begin
 
      do_request <= '1' when (ready_to_rq = '1') and (i_hbm_ps_in_read_out_pkg(0).arready = '1') and (enough_rqs_to_fill_ai_buf = '0') else '0';
+     o_ready_to_output <= ready_to_output_buf(ready_to_output_buf'length-1);
 
      -- we assume that the HBM is more than fast enough to write to the buffer, so it will never be too late but can be too early
      crtl_logic: process (i_clk) is
@@ -244,7 +247,7 @@ begin
                if i_reset_n = '0' then
                     receive_cnt <= to_unsigned(0, receive_cnt'length);
                     receive_sub_block_coeff_cnt <= to_unsigned(0, receive_sub_block_coeff_cnt'length);
-                    o_ready_to_output <= '0';
+                    ready_to_output_buf(0) <= '0';
                else
                     -- receive logic
                     if i_hbm_ps_in_read_out_pkg(0).rvalid = '1' then
@@ -256,17 +259,18 @@ begin
                                    receive_cnt <= receive_cnt + to_unsigned(1, receive_cnt'length);
                               else
                                    receive_cnt <= to_unsigned(0, receive_cnt'length);
-                                   o_ready_to_output <= '1';
+                                   ready_to_output_buf(0) <= '1';
                               end if;
                          end if;
                     end if;
                end if;
+               ready_to_output_buf(1 to ready_to_output_buf'length - 1) <= ready_to_output_buf(0 to ready_to_output_buf'length - 2);
           end if;
      end process;
 
      initial_latency_counter: one_time_counter
           generic map (
-               tripping_value     => blind_rot_iter_latency_till_ready_for_ai - default_ram_retiming_latency - 1,
+               tripping_value     => blind_rot_iter_latency_till_ready_for_ai - default_ram_retiming_latency - ai_buffer_output_buffer,
                out_negated        => false,
                bufferchain_length => log2_pbs_throughput
           )
@@ -299,7 +303,7 @@ begin
                generic map (
                     addr_length         => out_batchsize_cnt_to_use'length,
                     ram_length          => ram_len,
-                    ram_out_bufs_length => default_ram_retiming_latency,
+                    ram_out_bufs_length => default_ram_retiming_latency+(ai_buffer_output_buffer-1),
                     ram_type            => ram_style_auto,
                     coeff_bit_width     => o_ai_coeff'length
                )

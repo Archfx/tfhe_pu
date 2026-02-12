@@ -29,6 +29,7 @@ library IEEE;
      use IEEE.numeric_std.all;
 library work;
      use work.constants_utils.all;
+     use work.math_utils.all;
 
 entity karazuba_mult_dsp_level is
      generic (
@@ -45,8 +46,8 @@ end entity;
 
 architecture Behavioral of karazuba_mult_dsp_level is
 
-     constant half_base : integer := base_len / 2;         --rounded down
-     constant rest_base : integer := base_len - half_base;
+     constant half_base : integer := base_len / 2;         --rounded down, 16 bit
+     constant rest_base : integer := base_len - half_base; -- 17 bit
      subtype half_reg is unsigned(0 to half_base - 1);
      subtype half_rest_reg is unsigned(0 to rest_base - 1);
 
@@ -66,9 +67,9 @@ architecture Behavioral of karazuba_mult_dsp_level is
      signal b0_buf2     : half_reg;
      signal b1_buf2     : half_rest_reg;
 
-     signal p1 : full_rest_reg;
-     signal p2 : full_reg;
-     signal p3 : unsigned(0 to 2 * (rest_base + 1) - 1);
+     signal p1 : full_rest_reg; -- 17x17 bit
+     signal p2 : full_reg; -- 16x16 bit
+     signal p3 : unsigned(0 to 2 * (rest_base + 1) - 1); -- 18x18 bit
 
      signal p2_upper : half_reg;
      signal p2_lower : half_reg;
@@ -94,6 +95,8 @@ architecture Behavioral of karazuba_mult_dsp_level is
 
      type half_reg_wait_regs is array (natural range <>) of half_reg;
      signal p2_lower_wait_regs : half_reg_wait_regs(0 to 3 - 1);
+     signal p2_lower_wait_regs_end : half_reg;
+     signal p2_lower_wait_regs_cnt: unsigned(0 to get_bit_length(p2_lower_wait_regs'length-1-1)-1) := to_unsigned(p2_lower_wait_regs'length-1-1,get_bit_length(p2_lower_wait_regs'length-1-1)); -- another -1 because end part handles separately
 
      signal res_buf : unsigned(0 to o_res'length - 1);
 
@@ -102,6 +105,8 @@ architecture Behavioral of karazuba_mult_dsp_level is
 
      signal a1_plus_a0_buf : unsigned(0 to a1_plus_a0'length - 1);
      -- signal b1_plus_b0_buf : unsigned(0 to a1_plus_a0'length - 1);
+
+     constant p2_lower_regs_rolling: boolean := true;
 
 begin
      -- MSB is at index 0
@@ -119,7 +124,7 @@ begin
      p2 <= p2_wait_regs(p2_wait_regs'length - 1);
      p3 <= p3_wait_regs(p3_wait_regs'length - 1);
 
-     res_buf <= unsigned(std_ulogic_vector(p123) & std_ulogic_vector(p123_temp_lower_buf) & std_ulogic_vector(p2_lower_wait_regs(p2_lower_wait_regs'length - 1)));
+     res_buf <= unsigned(std_ulogic_vector(p123) & std_ulogic_vector(p123_temp_lower_buf) & std_ulogic_vector(p2_lower_wait_regs_end));
 
      -- buffer output?
      o_res <= res_buf;
@@ -158,8 +163,6 @@ begin
                -- p2 & p1 are ready
                p1_plus_p2_minus_p2upper <= unsigned(std_ulogic_vector(to_unsigned(0, 2)) & std_ulogic_vector(p1)) + p2 - p2_upper; -- extend one operand for the carry bit
                p1_wait_reg_2(0) <= p1;
-               p2_lower_wait_regs(0) <= p2_lower;
-               p2_lower_wait_regs(1 to p2_lower_wait_regs'length - 1) <= p2_lower_wait_regs(0 to p2_lower_wait_regs'length - 2);
                p1_wait_reg_2(1 to p1_wait_reg_2'length - 1) <= p1_wait_reg_2(0 to p1_wait_reg_2'length - 2);
 
                -- stage 4
@@ -171,5 +174,31 @@ begin
                p123_temp_lower_buf <= p123_temp_lower;
           end if;
      end process;
+
+     p2_regs_rolling: if p2_lower_regs_rolling generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    p2_lower_wait_regs(0) <= p2_lower;
+                    p2_lower_wait_regs(1 to p2_lower_wait_regs'length - 1) <= p2_lower_wait_regs(0 to p2_lower_wait_regs'length - 2);
+               end if;
+          end process;
+          p2_lower_wait_regs_end <= p2_lower_wait_regs(p2_lower_wait_regs'length-1);
+     end generate;
+     
+     p2_regs_not_rolling: if not p2_lower_regs_rolling generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    if p2_lower_wait_regs_cnt = 0 then
+                         p2_lower_wait_regs_cnt <= to_unsigned(p2_lower_wait_regs'length-1-1,p2_lower_wait_regs_cnt'length);
+                    else
+                         p2_lower_wait_regs_cnt <= p2_lower_wait_regs_cnt - to_unsigned(1,p2_lower_wait_regs_cnt'length);
+                    end if;
+                    p2_lower_wait_regs(to_integer(p2_lower_wait_regs_cnt)) <= p2_lower;
+                    p2_lower_wait_regs_end <= p2_lower_wait_regs(to_integer(p2_lower_wait_regs_cnt));
+               end if;
+          end process;
+     end generate;
 
 end architecture;

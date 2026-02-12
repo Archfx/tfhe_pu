@@ -101,8 +101,9 @@ architecture Behavioral of top is
      signal pbs_not_ready         : std_ulogic;
      signal pbs_in_coeff_cnt      : idx_int    := to_unsigned(0, log2_num_coefficients);
      signal pbs_lookup_table_part : sub_polynom(0 to throughput - 1);
+     signal pbs_lookup_table_part_buffer : sub_polynom(0 to throughput - 1);
      signal pbs_result            : sub_polynom(0 to throughput - 1);
-     signal pbs_display_coeff_cnt : idx_int    := to_unsigned(0, pbs_result'length);
+     signal pbs_display_coeff_cnt : idx_int    := to_unsigned(0, log2_num_coefficients);
 
      signal ai                     : rotate_idx;
      signal b_val                     : rotate_idx;
@@ -168,7 +169,7 @@ begin
           port map (
                i_clk                => clk_signal,
                i_reset              => reset(reset'length - 1),
-               i_lookup_table_part  => pbs_lookup_table_part,
+               i_lookup_table_part  => pbs_lookup_table_part_buffer,
                i_lwe_b              => b_val,
                i_lwe_ai             => ai,
                i_BSK_i_part         => bsk_i_part,
@@ -190,6 +191,7 @@ begin
                for i in 0 to pbs_lookup_table_part'length - 1 loop
                     pbs_lookup_table_part(i) <= pbs_default_lookuptable(to_integer(pbs_in_coeff_cnt) + i);
                end loop;
+               pbs_lookup_table_part_buffer <= pbs_lookup_table_part;
 
                for i in 0 to num_leds_for_pbs_result - 1 loop
                     led_o(i) <= std_ulogic(pbs_result(i + to_integer(pbs_display_coeff_cnt))(0));

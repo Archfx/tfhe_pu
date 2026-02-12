@@ -104,6 +104,7 @@ architecture Behavioral of top is
      signal ntt_reset        : std_ulogic := '1';
      signal ntt_result       : sub_polynom(0 to throughput - 1);
      signal ntt_input        : sub_polynom(0 to throughput - 1);
+     signal ntt_input_buf        : sub_polynom(0 to throughput - 1);
      
      constant cnt_buffer_length    : integer := 2 * log2_ntt_throughput;
      type in_coeff_cnt_type is array (natural range <>) of unsigned(0 to get_bit_length(input_ram_num_coeffs - 1) - 1);
@@ -114,6 +115,7 @@ architecture Behavioral of top is
 
      signal led_secondary : std_logic_vector(num_other_leds - 1 downto 0) := (others => 'U');
      signal reset         : std_ulogic_vector(0 to 100 - 1)               := (others => '1');
+     signal bits_cnt: unsigned(0 to get_bit_length(synthesiseable_uint'length-1)-1) := to_unsigned(0, get_bit_length(synthesiseable_uint'length-1));
 
      constant input_ram_content : sub_polynom(0 to throughput * input_ram_num_coeffs - 1) := get_random_test_sub_polym(throughput * input_ram_num_coeffs, 1234);
 
@@ -159,7 +161,7 @@ begin
           port map (
                i_clk               => clk_signal,
                i_reset             => ntt_reset,
-               i_sub_polym         => ntt_input,
+               i_sub_polym         => ntt_input_buf,
                o_result            => ntt_result,
                o_next_module_reset => open
           );
@@ -181,11 +183,13 @@ begin
           if rising_edge(clk_signal) then
                reset(0) <= '0';
                reset(1 to reset'length - 1) <= reset(0 to reset'length - 2);
+               bits_cnt <= bits_cnt + to_unsigned(1, bits_cnt'length);
 
                for i in 0 to num_leds_for_ntt_result - 1 loop
-                    led_o(i) <= std_ulogic(ntt_result(i + to_integer(ntt_in_coeff_cnt(ntt_in_coeff_cnt'length-1)))(0));
+                    led_o(i) <= std_ulogic(ntt_result(i + to_integer(ntt_in_coeff_cnt(ntt_in_coeff_cnt'length-1)))(to_integer(bits_cnt)));
                end loop;
                led_o_buffer <= led_o;
+               ntt_input_buf <= ntt_input;
           end if;
      end process;
 
@@ -194,7 +198,7 @@ begin
                generic map (
                     ram_content         => input_ram_content(coeff_idx * input_ram_num_coeffs to (coeff_idx + 1) * input_ram_num_coeffs - 1),
                     addr_length         => ntt_in_coeff_cnt(0)'length,
-                    ram_out_bufs_length => default_ram_retiming_latency,
+                    ram_out_bufs_length => default_ram_retiming_latency+1,
                     ram_type            => ram_style_auto
                )
                port map (

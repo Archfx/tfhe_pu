@@ -41,78 +41,33 @@ end entity;
 
 architecture Behavioral of easy_reduction is
 
-     signal reduced_res : synthesiseable_uint;
-     signal num_buf     : wait_registers_int_extended(0 to clks_per_64_bit_add - 1);
-
-     signal reg_chain : wait_registers_uint(0 to (clks_per_64_bit_add-1*boolean'pos(big_add_in_buf)) - 1);
-     signal num0_buf: synthesiseable_uint;
+     signal result_buffer: synthesiseable_uint;
 
 begin
-
-     num_buf_flow: if num_buf'length > 1 generate
+     
+     do_out_buf: if use_easy_red_out_buffer generate
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    num_buf(1 to num_buf'length - 1) <= num_buf(0 to num_buf'length - 2);
+                    o_mod_res <= result_buffer;
                end if;
           end process;
      end generate;
-
-     case_minus: if not can_be_negative generate
-          process (i_clk)
-          begin
-               if rising_edge(i_clk) then
-                    -- stage 0
-                    -- big_add, result: reduced_res
-                    num_buf(0) <= i_num;
-
-                    -- stage 1
-                    if num_buf(num_buf'length - 1) >= to_synth_int_extended(modulus) then
-                         o_mod_res <= reduced_res;
-                    else
-                         o_mod_res <= to_synth_uint(num_buf(num_buf'length - 1));
-                    end if;
-               end if;
-          end process;
-     end generate;
-
-     case_plus: if can_be_negative generate
-          process (i_clk)
-          begin
-               if rising_edge(i_clk) then
-                    -- stage 0
-                    -- big_add, result: reduced_res
-                    num_buf(0) <= i_num;
-
-                    -- stage 1
-                    if num_buf(num_buf'length - 1) < to_synth_int_extended(to_synth_uint(0)) then
-                         o_mod_res <= reduced_res;
-                    else
-                         o_mod_res <= to_synth_uint(num_buf(num_buf'length - 1));
-                    end if;
-               end if;
-          end process;
+     no_out_buf: if not use_easy_red_out_buffer generate
+          o_mod_res <= result_buffer;
      end generate;
 
      -- the actual addition / subtraction     
-     no_in_reg: if not big_add_in_buf generate
-          num0_buf <= to_synth_uint(i_num);
-     end generate;
-
-     in_reg: if big_add_in_buf generate
-          process (i_clk) is
-          begin
-               if rising_edge(i_clk) then
-                    num0_buf <= to_synth_uint(i_num);
-               end if;
-          end process;
-     end generate;
 
      add: if can_be_negative generate
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    reg_chain(0) <= num0_buf + modulus;
+                    if i_num(0) = '1' then
+                         result_buffer <= to_synth_uint(i_num + to_synth_int_extended(modulus));
+                    else
+                         result_buffer <= to_synth_uint(i_num);
+                    end if;
                end if;
           end process;
      end generate;
@@ -121,20 +76,13 @@ begin
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    reg_chain(0) <= num0_buf - modulus;
+                    if i_num > to_synth_int_extended(modulus) then
+                         result_buffer <= to_synth_uint(i_num - to_synth_int_extended(modulus));
+                    else
+                         result_buffer <= to_synth_uint(i_num);
+                    end if;
                end if;
           end process;
      end generate;
-
-     reg_flow: if reg_chain'length > 1 generate
-          process (i_clk)
-          begin
-               if rising_edge(i_clk) then
-                    reg_chain(1 to reg_chain'length - 1) <= reg_chain(0 to reg_chain'length - 2);
-               end if;
-          end process;
-     end generate;
-
-     reduced_res <= reg_chain(reg_chain'length - 1);
 
 end architecture;

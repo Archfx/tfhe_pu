@@ -187,7 +187,7 @@ begin
                generic map (
                     addr_length         => lut_out_block_cnt'length,
                     ram_length          => storage_num_blocks,
-                    ram_out_bufs_length => acc_buf_ram_retiming_latency,
+                    ram_out_bufs_length => lut_buf_ram_retiming_latency,
                     ram_type            => ram_style_auto,
                     coeff_bit_width     => hbm_part(0)'length
                )

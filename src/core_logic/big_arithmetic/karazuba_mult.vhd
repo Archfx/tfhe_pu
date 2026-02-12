@@ -30,6 +30,7 @@ library IEEE;
 library work;
      use work.constants_utils.all;
      use work.datatypes_utils.all;
+     use work.math_utils.all;
 
 entity karazuba_mult is
      generic (
@@ -73,12 +74,13 @@ architecture Behavioral of karazuba_mult is
      signal p2       : full_reg; -- with the max values for a0 & b0 its 64 bits unsigned
      signal p2_upper : half_reg;
      signal p2_lower : half_reg;
+     signal p1_plus_p2_minus_p2upper : unsigned(0 to (p1'length + 2) - 1); -- +2 for carry
 
      signal a1_plus_a0 : unsigned(0 to a1'length + 1 - 1);         -- +1 for carry
      signal b1_plus_b0 : unsigned(0 to b1'length + 1 - 1);         -- +1 for carry
      signal p3         : unsigned(0 to 2 * a1_plus_a0'length - 1); -- with the max values for a1,a0,b1 & b0 its 66 bits unsigned
 
-     signal p2_minus_p2upper : unsigned(0 to p2'length - 1); -- no carry possible
+     -- signal p2_minus_p2upper : unsigned(0 to p2'length - 1); -- no carry possible
      -- signal p1_plus_p2_minus_p2upper : unsigned(0 to (p1'length + 2) - 1); -- +2 for carry
      signal p123_temp         : unsigned(0 to p3'length - 1);
      signal p123_temp_upper   : unsigned(0 to p3'length-base_len - 1);
@@ -90,6 +92,10 @@ architecture Behavioral of karazuba_mult is
      signal p1_wait_reg_2      : full_reg;
      signal p1_wait_reg_3      : full_reg;
      signal p2_lower_wait_regs : half_reg_wait_regs(0 to 3 - 1);
+     signal p2_lower_wait_regs_end : half_reg;
+     signal p2_lower_wait_regs_cnt: unsigned(0 to get_bit_length(p2_lower_wait_regs'length-1-1)-1) := to_unsigned(p2_lower_wait_regs'length-1-1,get_bit_length(p2_lower_wait_regs'length-1-1)); -- another -1 because end part handles separately
+
+     constant p2_lower_regs_rolling: boolean := true;
 
 begin
      -- MSB is at index 0
@@ -103,7 +109,7 @@ begin
      p123_temp_upper <= (p123_temp(0 to p123_temp_upper'length - 1));
      p123_temp_lower <= (p123_temp(p123_temp_upper'length to p123_temp'length - 1));
 
-     o_res <= unsigned(std_ulogic_vector(p123) & std_ulogic_vector(p123_temp_lower_buf) & std_ulogic_vector(p2_lower_wait_regs(p2_lower_wait_regs'length - 1)));
+     o_res <= unsigned(std_ulogic_vector(p123) & std_ulogic_vector(p123_temp_lower_buf) & std_ulogic_vector(p2_lower_wait_regs_end));
 
      p1_mult: mult_dsp_level
           generic map (
@@ -148,14 +154,13 @@ begin
                -- stage x-1
                -- we rewrite (p3-(p1+p2))*2**(n/2)+p2 to (p3-(p1+p2))+p2_upper || p2_lower = p3-(p1+p2-p2_upper) || p2_lower
                -- p1 and p2 finish one tic earlier than p3
-               -- use that time to calculate p2-p2_upper
-               p2_minus_p2upper <= p2 - p2_upper; -- cannot be negative
+               -- use that time to calculate p1+p2-p2_upper
+               p1_plus_p2_minus_p2upper <= unsigned(std_ulogic_vector(to_unsigned(0, 2)) & std_ulogic_vector(p1)) + p2 - p2_upper; -- extend one operand for the carry bit
                p1_wait_reg_2 <= p1;
-               p2_lower_wait_regs(0) <= p2_lower;
-               p2_lower_wait_regs(1 to p2_lower_wait_regs'length - 1) <= p2_lower_wait_regs(0 to p2_lower_wait_regs'length - 2);
+
                -- stage x
                -- p3 is there
-               p123_temp <= p3 - p1_wait_reg_2 - p2_minus_p2upper;
+               p123_temp <= p3 - p1_plus_p2_minus_p2upper;
                p1_wait_reg_3 <= p1_wait_reg_2;
 
                -- stage x+1
@@ -163,5 +168,31 @@ begin
                p123 <= p1_wait_reg_3 + p123_temp_upper;
           end if;
      end process;
+
+     p2_regs_rolling: if p2_lower_regs_rolling generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    p2_lower_wait_regs(0) <= p2_lower;
+                    p2_lower_wait_regs(1 to p2_lower_wait_regs'length - 1) <= p2_lower_wait_regs(0 to p2_lower_wait_regs'length - 2);
+               end if;
+          end process;
+          p2_lower_wait_regs_end <= p2_lower_wait_regs(p2_lower_wait_regs'length-1);
+     end generate;
+
+     p2_regs_not_rolling: if not p2_lower_regs_rolling generate
+          process (i_clk) is
+          begin
+               if rising_edge(i_clk) then
+                    if p2_lower_wait_regs_cnt = 0 then
+                         p2_lower_wait_regs_cnt <= to_unsigned(p2_lower_wait_regs'length-1-1,p2_lower_wait_regs_cnt'length);
+                    else
+                         p2_lower_wait_regs_cnt <= p2_lower_wait_regs_cnt - to_unsigned(1,p2_lower_wait_regs_cnt'length);
+                    end if;
+                    p2_lower_wait_regs(to_integer(p2_lower_wait_regs_cnt)) <= p2_lower;
+                    p2_lower_wait_regs_end <= p2_lower_wait_regs(to_integer(p2_lower_wait_regs_cnt));
+               end if;
+          end process;
+     end generate;
 
 end architecture;

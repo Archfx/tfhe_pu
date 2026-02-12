@@ -40,8 +40,8 @@ end entity;
 architecture Behavioral of one_time_counter is
 
      constant internal_tripping_value : integer := get_max(0, tripping_value - 1 - bufferchain_length); -- -1 because it takes a cycle for the output to be processed
-     signal clk_cnt : unsigned(0 to get_max(1, get_bit_length(internal_tripping_value)) - 1);
-     constant internal_tripping_value_unsigned : unsigned(0 to clk_cnt'length - 1) := to_unsigned(internal_tripping_value, clk_cnt'length);
+     signal clk_cnt : unsigned(0 to 1+get_max(1, get_bit_length(internal_tripping_value)) - 1); --+1 for underflow detection
+     constant internal_tripping_value_unsigned : unsigned(0 to clk_cnt'length - 1) := to_unsigned(get_max(0,internal_tripping_value-1), clk_cnt'length);-- -1 for underflow detection check
 
      signal out_bufferchain_input : std_ulogic;
      constant internal_bufferchain_length : integer := bufferchain_length * boolean'pos(bufferchain_length < tripping_value) + (tripping_value) * boolean'pos(not(bufferchain_length < tripping_value));
@@ -72,13 +72,13 @@ begin
                begin
                     if rising_edge(i_clk) then
                          if i_reset = '1' then
-                              clk_cnt <= to_unsigned(0, clk_cnt'length);
+                              clk_cnt <= internal_tripping_value_unsigned;
                               out_bufferchain_input <= not triggered_val(0);
                          else
-                              if clk_cnt < internal_tripping_value_unsigned then
-                                   clk_cnt <= clk_cnt + to_unsigned(1, clk_cnt'length);
-                              else
+                              if clk_cnt(0) = '1' then
                                    out_bufferchain_input <= triggered_val(0);
+                              else
+                                   clk_cnt <= clk_cnt - to_unsigned(1, clk_cnt'length);
                               end if;
                          end if;
                     end if;

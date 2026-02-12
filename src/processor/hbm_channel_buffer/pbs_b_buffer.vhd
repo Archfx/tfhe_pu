@@ -56,7 +56,7 @@ architecture Behavioral of pbs_b_buffer is
      signal b_val_valid_cnt : unsigned(0 to get_bit_length(clks_b_valid - 1) - 1);
 
      -- use ram retiming registers
-     signal b_storage_end : rotate_idx_array(0 to default_ram_retiming_latency - 1);
+     signal b_storage_end : rotate_idx_array(0 to default_ram_retiming_latency+(b_buffer_output_buffer-1) - 1);
 
      signal b_addresses    : hbm_ps_port_memory_address_arr(0 to pbs_batchsize - 1);
      signal b_addr_in_cnt  : unsigned(0 to get_bit_length(b_addresses'length) - 1);
@@ -65,18 +65,22 @@ architecture Behavioral of pbs_b_buffer is
      signal hbm_part          : sub_polynom(0 to hbm_coeffs_per_clock_per_ps_port - 1);
      signal hbm_data_stripped : rotate_idx_array(0 to hbm_coeffs_per_clock_per_ps_port - 1);
 
+     signal ready_to_output_buf: std_ulogic_vector(0 to b_buffer_output_buffer-1);
+
 begin
 
      o_hbm_read_in.rready <= '1';
      o_hbm_read_in.arlen  <= std_logic_vector(to_unsigned(0, o_hbm_read_in.arlen'length));
      o_hbm_read_in.arid   <= std_logic_vector(to_unsigned(0, o_hbm_read_in.arid'length)); -- should not be important for this module
 
+     o_ready_to_output <= ready_to_output_buf(ready_to_output_buf'length-1);
+
      read_write_logic: process (i_clk) is
      begin
           if rising_edge(i_clk) then
                if i_reset_n = '0' then
                     o_hbm_read_in.arvalid <= '0';
-                    o_ready_to_output <= '0';
+                    ready_to_output_buf(0) <= '0';
 
                     b_addr_out_cnt <= to_unsigned(0, b_addr_out_cnt'length);
                     b_in_block_cnt <= to_unsigned(0, b_in_block_cnt'length);
@@ -87,11 +91,12 @@ begin
                          if b_in_block_cnt < to_unsigned(pbs_batchsize - 1, b_in_block_cnt'length) then
                               b_in_block_cnt <= b_in_block_cnt + to_unsigned(1, b_in_block_cnt'length);
                          else
-                              o_ready_to_output <= '1';
+                              ready_to_output_buf(0) <= '1';
                               b_in_block_cnt <= to_unsigned(0, b_in_block_cnt'length);
                          end if;
                     end if;
                end if;
+               ready_to_output_buf(1 to ready_to_output_buf'length - 1) <= ready_to_output_buf(0 to ready_to_output_buf'length - 2);
 
                -- input from op buffer
                if i_new_batch = '1' then

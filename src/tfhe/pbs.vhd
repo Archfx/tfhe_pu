@@ -97,11 +97,16 @@ architecture Behavioral of pbs is
      end component;
 
      signal pbs_acc_init_not_ready : std_ulogic;
+     signal pbs_acc_init_not_ready_buf : std_ulogic;
      signal blind_rotate_input     : sub_polynom(0 to throughput - 1);
+     signal blind_rotate_input_buf     : sub_polynom(0 to throughput - 1);
      signal blind_rotate_output    : sub_polynom(0 to throughput - 1);
+     signal blind_rotate_output_buf    : sub_polynom(0 to throughput - 1);
      signal sample_extract_reset   : std_ulogic;
+     signal sample_extract_reset_buf   : std_ulogic;
 
      signal samp_extract_idx : rotate_idx;
+     signal samp_extract_idx_buf : rotate_idx;
 
      signal b_extract_idx_bufferchain : idx_int_array(0 to rotate_polym_first_block_initial_delay - output_writing_latency - 1);
 
@@ -124,6 +129,20 @@ begin
                o_next_module_reset => pbs_acc_init_not_ready
           );
 
+     init_output_buf: if buffer_init_output generate
+          process (i_clk) is
+          begin
+          if rising_edge(i_clk) then
+               blind_rotate_input_buf <= blind_rotate_input;
+               pbs_acc_init_not_ready_buf <= pbs_acc_init_not_ready;
+          end if;
+          end process;
+     end generate;
+     no_init_output_buf: if not buffer_init_output generate
+          blind_rotate_input_buf <= blind_rotate_input;
+          pbs_acc_init_not_ready_buf <= pbs_acc_init_not_ready;
+     end generate;
+
      blind_rotate: blind_rotation
           generic map (
                throughput                     => throughput,
@@ -136,13 +155,29 @@ begin
           )
           port map (
                i_clk               => i_clk,
-               i_reset             => pbs_acc_init_not_ready,
+               i_reset             => pbs_acc_init_not_ready_buf,
                i_lwe_ai            => i_lwe_ai,
-               i_acc_part          => blind_rotate_input,
+               i_acc_part          => blind_rotate_input_buf,
                i_BSK_i_part        => i_BSK_i_part,
                o_result            => blind_rotate_output,
                o_next_module_reset => sample_extract_reset
           );
+
+     samp_extract_input_buf: if buffer_samp_extract_input generate
+          process (i_clk) is
+          begin
+          if rising_edge(i_clk) then
+               sample_extract_reset_buf <= sample_extract_reset;
+               blind_rotate_output_buf <= blind_rotate_output;
+               samp_extract_idx_buf <= samp_extract_idx;
+          end if;
+          end process;
+     end generate;
+     no_samp_extract_input_buf: if not buffer_samp_extract_input generate
+          sample_extract_reset_buf <= sample_extract_reset;
+          blind_rotate_output_buf <= blind_rotate_output;
+          samp_extract_idx_buf <= samp_extract_idx;
+     end generate;
 
      -- one way to do the sample extract is to read the .a-part coefficients in reverse
      -- then negate them all
@@ -159,9 +194,9 @@ begin
           )
           port map (
                i_clk               => i_clk,
-               i_reset             => sample_extract_reset,
-               i_sub_polym         => blind_rotate_output,
-               i_rotate_by         => samp_extract_idx,
+               i_reset             => sample_extract_reset_buf,
+               i_sub_polym         => blind_rotate_output_buf,
+               i_rotate_by         => samp_extract_idx_buf,
                o_result            => o_result,
                o_next_module_reset => o_next_module_reset
           );
@@ -169,7 +204,7 @@ begin
      process (i_clk)
      begin
           if rising_edge(i_clk) then
-               b_extract_idx_bufferchain(0) <= i_sample_extract_idx;
+               b_extract_idx_bufferchain(0) <= i_sample_extract_idx; -- required for lwe_n_buffer
                b_extract_idx_bufferchain(1 to b_extract_idx_bufferchain'length - 1) <= b_extract_idx_bufferchain(0 to b_extract_idx_bufferchain'length - 2);
           end if;
      end process;

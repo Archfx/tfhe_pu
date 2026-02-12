@@ -81,10 +81,10 @@ architecture Behavioral of ntt_tb is
      signal intt_result_buffer_polym       : polynom;
      signal result_ntt_tb                  : polynom; -- v4p ignore w-303
      signal result_intt_tb                 : polynom; -- v4p ignore w-303
-     signal ntt_firstoutput_not_ready      : std_ulogic_vector(0 to counter_buffer_len - 1);
+     signal ntt_firstoutput_not_ready      : std_ulogic_vector(0 to counter_buffer_len+ntt_cnts_early_reset - 1);
      signal ntt_new_complete_output_ready  : std_ulogic := '0';
      signal intt_new_complete_output_ready : std_ulogic := '0';
-     signal intt_firstoutput_not_ready     : std_ulogic_vector(0 to counter_buffer_len - 1);
+     signal intt_firstoutput_not_ready     : std_ulogic_vector(0 to counter_buffer_len+ntt_cnts_early_reset - 1);
      signal finished                       : std_ulogic := '0';
 
      signal zero_polym           : polynom;

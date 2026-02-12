@@ -38,32 +38,14 @@ entity big_add is
 end entity;
 
 architecture Behavioral of big_add is
-     signal reg_chain : wait_registers_int_extended(0 to (clks_per_64_bit_add-1*boolean'pos(big_add_in_buf)) - 1);
-     signal num0_buf: synthesiseable_int;
-     signal num1_buf: synthesiseable_int;
 
 begin
-     
-     no_in_reg: if not big_add_in_buf generate
-          num0_buf <= i_num0;
-          num1_buf <= i_num1;
-     end generate;
-
-     in_reg: if big_add_in_buf generate
-          process (i_clk) is
-          begin
-               if rising_edge(i_clk) then
-                    num0_buf <= i_num0;
-                    num1_buf <= i_num1;
-               end if;
-          end process;
-     end generate;
 
      add: if not substraction generate
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    reg_chain(0) <= to_synth_int_extended(num0_buf) + to_synth_int_extended(num1_buf);
+                    o_res <= to_synth_int_extended(i_num0) + to_synth_int_extended(i_num1);
                end if;
           end process;
      end generate;
@@ -72,20 +54,9 @@ begin
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    reg_chain(0) <= to_synth_int_extended(num0_buf) - to_synth_int_extended(num1_buf);
+                    o_res <= to_synth_int_extended(i_num0) - to_synth_int_extended(i_num1);
                end if;
           end process;
      end generate;
-
-     reg_flow: if reg_chain'length > 1 generate
-          process (i_clk)
-          begin
-               if rising_edge(i_clk) then
-                    reg_chain(1 to reg_chain'length - 1) <= reg_chain(0 to reg_chain'length - 2);
-               end if;
-          end process;
-     end generate;
-
-     o_res <= reg_chain(reg_chain'length - 1);
 
 end architecture;

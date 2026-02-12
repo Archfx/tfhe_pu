@@ -135,6 +135,9 @@ architecture Behavioral of bski_pbs_pingpongbuffer is
 
      signal write_en_vec     : std_ulogic_vector(0 to o_bski_part'length - 1);
      signal write_en_vec_buf : std_ulogic_vector(0 to write_en_vec'length - 1);
+     
+     signal i_buf_hbm_ps_in_read_out_pkg : hbm_ps_out_read_pkg_arr(0 to bsk_hbm_num_ps_ports - 1);
+     signal o_buf_hbm_ps_in_read_in_pkg  : hbm_ps_in_read_pkg_arr(0 to bsk_hbm_num_ps_ports - 1);
 
 begin
 
@@ -143,23 +146,36 @@ begin
           assert false report "Sorry - HBM not fast enough for this configuration" severity error;
      end generate;
 
+     out_buf: if use_hbm_output_buffer generate
+          process (i_clk) is
+          begin
+          if rising_edge(i_clk) then
+               o_hbm_ps_in_read_in_pkg <= o_buf_hbm_ps_in_read_in_pkg;
+               i_buf_hbm_ps_in_read_out_pkg <= i_hbm_ps_in_read_out_pkg;
+          end if;
+          end process;
+     end generate;
+     no_out_buf: if not use_hbm_output_buffer generate
+          o_hbm_ps_in_read_in_pkg <= o_buf_hbm_ps_in_read_in_pkg;
+          i_buf_hbm_ps_in_read_out_pkg <= i_hbm_ps_in_read_out_pkg;
+     end generate;
 
      -- bsk buffer treats its hbm channels as one. Need to replicate the signal correctly with the addresses
      -- Each bsk hbm channel is controlled independently
      per_port_logic: for port_idx in 0 to bsk_hbm_num_ports_to_use - 1 generate
           -- fixed values
-          o_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).arid'length)); -- we expect that the requests are handled in the same order as we send them. We dont check the ids.
-          o_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_hbm_ps_in_read_in_pkg(0).arlen'length));
-          o_hbm_ps_in_read_in_pkg(port_idx).rready  <= '1';
-          o_hbm_ps_in_read_in_pkg(port_idx).araddr(hbm_port_and_stack_addr_width - 1 downto 0) <= bsk_base_addr(hbm_port_and_stack_addr_width - 1 downto 0) + to_unsigned(port_idx, hbm_port_and_stack_addr_width); -- set the addr-bits that lead to the channel, keep the channel addr-bits
-          o_hbm_ps_in_read_in_pkg(port_idx).araddr(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width) <= bski_rq_addrs(port_idx)(o_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width);
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_buf_hbm_ps_in_read_in_pkg(0).arid'length)); -- we expect that the requests are handled in the same order as we send them. We dont check the ids.
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_buf_hbm_ps_in_read_in_pkg(0).arlen'length));
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).rready  <= '1';
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).araddr(hbm_port_and_stack_addr_width - 1 downto 0) <= bsk_base_addr(hbm_port_and_stack_addr_width - 1 downto 0) + to_unsigned(port_idx, hbm_port_and_stack_addr_width); -- set the addr-bits that lead to the channel, keep the channel addr-bits
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).araddr(o_buf_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width) <= bski_rq_addrs(port_idx)(o_buf_hbm_ps_in_read_in_pkg(0).araddr'length - 1 downto hbm_port_and_stack_addr_width);
           
           write_enable_logic: for coeff_idx in 0 to num_sub_blocks_coeffs-1 generate
                process (i_clk) is
                begin
                if rising_edge(i_clk) then
                     -- alternate between rows, the rows are interleaved so that hbm signals have to travel less distance
-                    if receive_sub_block_cnts(port_idx) = to_unsigned(coeff_idx mod num_sub_blocks, receive_sub_block_cnts(0)'length) and (i_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1') then
+                    if receive_sub_block_cnts(port_idx) = to_unsigned(coeff_idx mod num_sub_blocks, receive_sub_block_cnts(0)'length) and (i_buf_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1') then
                          write_en_vec(port_idx*num_sub_blocks_coeffs + coeff_idx) <= '1';
                     else
                          write_en_vec(port_idx*num_sub_blocks_coeffs + coeff_idx) <= '0';
@@ -173,19 +189,20 @@ begin
                     if i_reset_n = '0' then
                          receive_sub_block_cnts(port_idx) <= to_unsigned(0, receive_sub_block_cnts(0)'length); -- receive_sub_block_cnts keeps track of what rams to write
                          bram_write_addrs(port_idx) <= to_unsigned(0, bram_write_addrs(0)'length); -- bram_write_addrs keeps track where to write in the ram
-                    else
+                    elsif i_buf_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1' then
+                         -- FW: avoid this by initilizing bram_write_addrs per sub-block with an offset, then only count up
                          -- receive cnt logic
-                         if i_hbm_ps_in_read_out_pkg(port_idx).rvalid = '1' then
-                              if receive_sub_block_cnts(port_idx) < to_unsigned(num_sub_blocks - 1, receive_sub_block_cnts(0)'length) then
-                                   receive_sub_block_cnts(port_idx) <= receive_sub_block_cnts(port_idx) + to_unsigned(1, receive_sub_block_cnts(0)'length);
-                              else
-                                   receive_sub_block_cnts(port_idx) <= to_unsigned(0, receive_sub_block_cnts(0)'length);
+                         if receive_sub_block_cnts(port_idx) < to_unsigned(num_sub_blocks - 1, receive_sub_block_cnts(0)'length) then
+                              receive_sub_block_cnts(port_idx) <= receive_sub_block_cnts(port_idx) + to_unsigned(1, receive_sub_block_cnts(0)'length);
+                         else
+                              receive_sub_block_cnts(port_idx) <= to_unsigned(0, receive_sub_block_cnts(0)'length);
+                         end if;
 
-                                   if bram_write_addrs(port_idx) < to_unsigned(bski_buf_length - 1, bram_write_addrs(0)'length) then
-                                        bram_write_addrs(port_idx) <= bram_write_addrs(port_idx) + to_unsigned(1, bram_write_addrs(0)'length);
-                                   else
-                                        bram_write_addrs(port_idx) <= to_unsigned(0, bram_write_addrs(0)'length);
-                                   end if;
+                         if receive_sub_block_cnts(port_idx) = to_unsigned(num_sub_blocks - 1, receive_sub_block_cnts(0)'length) then
+                              if bram_write_addrs(port_idx) < to_unsigned(bski_buf_length - 1, bram_write_addrs(0)'length) then
+                                   bram_write_addrs(port_idx) <= bram_write_addrs(port_idx) + to_unsigned(1, bram_write_addrs(0)'length);
+                              else
+                                   bram_write_addrs(port_idx) <= to_unsigned(0, bram_write_addrs(0)'length);
                               end if;
                          end if;
                     end if;
@@ -201,18 +218,18 @@ begin
                          init_done(port_idx) <= '0';
 
                          rq_block_cnts(port_idx) <= to_unsigned(0, rq_block_cnts(0)'length); -- keeps track when to stop requesting. Could use bski_rq_addrs instead but bad if later multiple keys
-                         o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
+                         o_buf_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
                          bski_rq_addrs(port_idx) <= bsk_base_addr;
                     else
 
-                         if i_hbm_ps_in_read_out_pkg(port_idx).arready = '1' and enough_rqs_to_fill_bufs(port_idx) = '0' then
+                         if i_buf_hbm_ps_in_read_out_pkg(port_idx).arready = '1' and enough_rqs_to_fill_bufs(port_idx) = '0' then
                               -- increment request address
                               if bski_rq_addrs(port_idx) < bsk_end_addr - to_unsigned(1, bski_rq_addrs(0)'length) then
                                    bski_rq_addrs(port_idx) <= bski_rq_addrs(port_idx) + to_unsigned(hbm_bytes_per_ps_port, bski_rq_addrs(0)'length);
                               else
                                    bski_rq_addrs(port_idx) <= bsk_base_addr;
                               end if;
-                              o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '1';
+                              o_buf_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '1';
 
                               if rq_block_cnts(port_idx) < to_unsigned(ping_buf_length*num_sub_blocks - 1, rq_block_cnts(0)'length) then
                                    rq_block_cnts(port_idx) <= rq_block_cnts(port_idx) + to_unsigned(1, rq_block_cnts(0)'length);
@@ -220,20 +237,18 @@ begin
                                    rq_block_cnts(port_idx) <= to_unsigned(0, rq_block_cnts(0)'length);
                               end if;
                          else
-                              o_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
+                              o_buf_hbm_ps_in_read_in_pkg(port_idx).arvalid <= '0';
                          end if;
 
                          if out_batchsize_cnt = to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
                               -- when read is done enable requests again
                               enough_rqs_to_fill_bufs(port_idx) <= '0';
-                         else
-                              if rq_block_cnts(port_idx) = to_unsigned(ping_buf_length*num_sub_blocks - 1, rq_block_cnts(0)'length) then
-                                   if init_done(port_idx) = '0' then
-                                        init_done(port_idx) <= '1';
-                                   else
-                                        -- write of ping or pong is done, stop requesting
-                                        enough_rqs_to_fill_bufs(port_idx)<= '1';
-                                   end if;
+                         elsif rq_block_cnts(port_idx) = to_unsigned(ping_buf_length*num_sub_blocks - 1, rq_block_cnts(0)'length) then
+                              if init_done(port_idx) = '0' then
+                                   init_done(port_idx) <= '1';
+                              else
+                                   -- write of ping or pong is done, stop requesting
+                                   enough_rqs_to_fill_bufs(port_idx)<= '1';
                               end if;
                          end if;
                     end if;
@@ -242,26 +257,25 @@ begin
      end generate;
 
      -- drive constant signals on unused ports
-     deactive_ports: for port_idx in bsk_hbm_num_ports_to_use to o_hbm_ps_in_read_in_pkg'length-1 generate
-          o_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).arid'length));
-          o_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_hbm_ps_in_read_in_pkg(0).arlen'length));
-          o_hbm_ps_in_read_in_pkg(port_idx).rready  <= '0';
-          o_hbm_ps_in_read_in_pkg(port_idx).araddr <= to_unsigned(0, o_hbm_ps_in_read_in_pkg(0).araddr'length);
-          o_hbm_ps_in_read_in_pkg(port_idx).arvalid  <= '0';
+     deactive_ports: for port_idx in bsk_hbm_num_ports_to_use to o_buf_hbm_ps_in_read_in_pkg'length-1 generate
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).arid    <= std_logic_vector(to_unsigned(0, o_buf_hbm_ps_in_read_in_pkg(0).arid'length));
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).arlen   <= std_logic_vector(to_unsigned(bsk_burstlen, o_buf_hbm_ps_in_read_in_pkg(0).arlen'length));
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).rready  <= '0';
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).araddr <= to_unsigned(0, o_buf_hbm_ps_in_read_in_pkg(0).araddr'length);
+          o_buf_hbm_ps_in_read_in_pkg(port_idx).arvalid  <= '0';
      end generate;
-
-     crtl_logic: process (i_clk) is
-     begin
-          if rising_edge(i_clk) then
-               if i_reset_n = '0' then
-                    o_ready_to_output <= '0';
-               else
-                    if bram_write_addrs(0) = to_unsigned(ping_buf_length - 1, bram_write_addrs(0)'length) then
-                         o_ready_to_output <= '1';
-                    end if;
-               end if;
-          end if;
-     end process;
+     
+     crtl_logic_ready_to_output: one_time_counter
+          generic map (
+               tripping_value     => worst_case_clks_per_bski_load - 1,
+               out_negated        => false,
+               bufferchain_length => log2_pbs_throughput
+          )
+          port map (
+               i_clk     => i_clk,
+               i_reset   => i_reset_n,
+               o_tripped => o_ready_to_output
+          );
      
      bski_brams: for coeff_idx in 0 to o_bski_part'length - 1 generate
           process (i_clk) is
@@ -274,7 +288,7 @@ begin
                generic map (
                     addr_length         => bram_write_addrs(0)'length,
                     ram_length          => bski_buf_length,
-                    ram_out_bufs_length => default_ram_retiming_latency,
+                    ram_out_bufs_length => default_ram_retiming_latency+(bski_buffer_output_buffer-1),
                     ram_type            => ram_style_bram,
                     coeff_bit_width     => bski_buf_input(0)'length
                )
@@ -290,7 +304,7 @@ begin
 
      bits2coeffs: for coeff_idx in 0 to hbm_part'length - 1 generate
           bits2bits: for bit_idx in 0 to hbm_part(0)'length - 1 generate
-               hbm_part(coeff_idx)(bit_idx) <= i_hbm_ps_in_read_out_pkg(coeff_idx / hbm_coeffs_per_clock_per_ps_port).rdata((coeff_idx mod hbm_coeffs_per_clock_per_ps_port) * hbm_part(0)'length + bit_idx);
+               hbm_part(coeff_idx)(bit_idx) <= i_buf_hbm_ps_in_read_out_pkg(coeff_idx / hbm_coeffs_per_clock_per_ps_port).rdata((coeff_idx mod hbm_coeffs_per_clock_per_ps_port) * hbm_part(0)'length + bit_idx);
           end generate;
      end generate;
      -- ignore excess coefficients when not all of the hbm stack is needed
@@ -303,7 +317,7 @@ begin
      -- when reading from the buffer treat all hbm-channel-buffers like one
      initial_latency_counter: one_time_counter
           generic map (
-               tripping_value     => blind_rot_iter_latency_till_elem_wise_mult - default_ram_retiming_latency - 1,
+               tripping_value     => blind_rot_iter_latency_till_elem_wise_mult - default_ram_retiming_latency - bski_buffer_output_buffer - 1*boolean'pos(use_hbm_output_buffer),
                out_negated        => false,
                bufferchain_length => log2_pbs_throughput
           )
@@ -320,18 +334,16 @@ begin
                     out_part_cnt_offset <= to_unsigned(0, out_part_cnt_offset'length);
                     out_part_cnt <= to_unsigned(0, out_part_cnt'length);
                     out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
-               else
-                    if start_outputting = '1' then
-                         if out_part_cnt < to_unsigned(ping_buf_length - 1, out_part_cnt'length) then
-                              out_part_cnt <= out_part_cnt + to_unsigned(1, out_part_cnt'length);
+               elsif start_outputting = '1' then
+                    if out_part_cnt < to_unsigned(ping_buf_length - 1, out_part_cnt'length) then
+                         out_part_cnt <= out_part_cnt + to_unsigned(1, out_part_cnt'length);
+                    else
+                         out_part_cnt <= to_unsigned(0, out_part_cnt'length);
+                         if out_batchsize_cnt < to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
+                              out_batchsize_cnt <= out_batchsize_cnt + to_unsigned(1, out_batchsize_cnt'length);
                          else
-                              out_part_cnt <= to_unsigned(0, out_part_cnt'length);
-                              if out_batchsize_cnt < to_unsigned(pbs_batchsize - 1, out_batchsize_cnt'length) then
-                                   out_batchsize_cnt <= out_batchsize_cnt + to_unsigned(1, out_batchsize_cnt'length);
-                              else
-                                   out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
-                                   out_part_cnt_offset <= out_part_cnt_offset + to_unsigned(ping_buf_length, out_part_cnt_offset'length);
-                              end if;
+                              out_batchsize_cnt <= to_unsigned(0, out_batchsize_cnt'length);
+                              out_part_cnt_offset <= out_part_cnt_offset + to_unsigned(ping_buf_length, out_part_cnt_offset'length);
                          end if;
                     end if;
                end if;

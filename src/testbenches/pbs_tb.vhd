@@ -169,12 +169,12 @@ begin
                          if input_choice = '0' then
                               pbs_lwe_b <= to_rotate_idx(lwe_test_cipher_0.lwe.b);
                               for i in 0 to ai_array'length-1 loop
-                                   ai_array <= to_rotate_idx(lwe_test_cipher_0.lwe.a(i));
+                                   ai_array(i) <= to_rotate_idx(lwe_test_cipher_0.lwe.a(i));
                               end loop;
                          else
                               pbs_lwe_b <= to_rotate_idx(lwe_test_cipher_1.lwe.b);
                               for i in 0 to ai_array'length-1 loop
-                                   ai_array <= to_rotate_idx(lwe_test_cipher_1.lwe.a(i));
+                                   ai_array(i) <= to_rotate_idx(lwe_test_cipher_1.lwe.a(i));
                               end loop;
                          end if;
                          input_choice <= not input_choice;

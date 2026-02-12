@@ -187,14 +187,18 @@ architecture Behavioral of blind_rotation_iteration is
      signal extra_latency_buffer                : sub_polyms_size_throughput(0 to boolean'pos(not extra_latency_buffer_ram_possible) * extra_latency_buffer_length - 1);
 
      type extra_latency_cnt_buf is array (natural range <>) of unsigned(0 to get_bit_length(extra_latency_buffer_length) - 1);
-     signal extra_latency_buffer_cnt : extra_latency_cnt_buf(0 to counter_buffer_len - 1); -- this module needs an early reset for this to work
+     signal extra_latency_buffer_cnt : unsigned(0 to get_bit_length(extra_latency_buffer_length) - 1) := to_unsigned(0, get_bit_length(extra_latency_buffer_length)); -- this module needs an early reset for this to work
+     signal extra_latency_buffer_cnt_buf_chain : extra_latency_cnt_buf(0 to counter_buffer_len - 2); -- -2 since chain_end handled separately
+     signal extra_latency_buffer_cnt_buf_chain_end : unsigned(0 to extra_latency_buffer_cnt'length-1);
 
      -- we need an enormous buffer so that the old accumulator can be added at the end for the bootstrapping
      -- there is no other way since we work pipelined and do not want to strain the memory for this
      signal acc_old_part : sub_polynom(0 to throughput - 1);
 
      type acc_in_buffer_cnt_buf is array (natural range <>) of unsigned(0 to get_bit_length(acc_buffer_length) - 1);
-     signal acc_in_buffer_cnt : acc_in_buffer_cnt_buf(0 to counter_buffer_len - 1);
+     signal acc_in_buffer_cnt : unsigned(0 to get_bit_length(acc_buffer_length) - 1) := to_unsigned(0, get_bit_length(acc_buffer_length));
+     signal acc_in_buffer_cnt_buf_chain : acc_in_buffer_cnt_buf(0 to counter_buffer_len - 2); -- -2 since chain_end handled separately
+     signal acc_in_buffer_cnt_buf_chain_end : unsigned(0 to acc_in_buffer_cnt'length-1);
 
      -- decompose related signals
      signal decompose_output_line_format : synth_uint_vector(0 to throughput * decomposition_length - 1);
@@ -215,6 +219,7 @@ architecture Behavioral of blind_rotation_iteration is
      signal mult_result_packed : sub_polyms_size_throughput_packed(0 to throughput - 1);
      signal intt_reset         : std_ulogic;
      signal adder_tree_result  : sub_polyms_size_throughput(0 to num_intts - 1);
+     signal adder_tree_result_buf  : sub_polyms_size_throughput(0 to num_intts - 1);
 
      -- intt related signals
      signal intt_result_not_ready        : std_ulogic;
@@ -254,7 +259,7 @@ begin
      ntts: for L_idx in 0 to num_ntts - 1 generate
           initial_latency_counter: one_time_counter
                generic map (
-                    tripping_value     => initial_decomp_delay_first_block - ntt_twiddle_rams_retiming_latency, -- -ntt_twiddle_rams_retiming_latency because of early reset for ntt
+                    tripping_value     => initial_decomp_delay_first_block - ntt_num_clks_reset_early,
                     out_negated        => true,
                     bufferchain_length => trailing_reset_buffer_len + (counter_buffer_len - 1)
                )
@@ -288,7 +293,7 @@ begin
 
      ntt_out_buf_reset_crtl: one_time_counter
           generic map (
-               tripping_value     => ntt_latency + ntt_twiddle_rams_retiming_latency - 1, -- -1 since ntt_out_buf needs one tic to compute the addresses
+               tripping_value     => ntt_latency + ntt_twiddle_rams_retiming_latency - 1-ntt_out_buf_reset_buf_len, -- -1 since ntt_out_buf needs one tic to compute the addresses
                out_negated        => true,
                bufferchain_length => trailing_reset_buffer_len
           )
@@ -384,10 +389,22 @@ begin
           port map (
                i_clk               => i_clk,
                i_reset             => intt_reset,
-               i_sub_polym         => adder_tree_result(0),
+               i_sub_polym         => adder_tree_result_buf(0),
                o_result            => result_intt_not_rescaled,
                o_next_module_reset => intt_result_not_ready
           );
+     
+     intt_input_buf: if use_intt_input_buffer generate
+          process (i_clk) is
+          begin
+          if rising_edge(i_clk) then
+               adder_tree_result_buf <= adder_tree_result;
+          end if;
+          end process;
+     end generate;
+     no_intt_input_buf: if not use_intt_input_buffer generate
+          adder_tree_result_buf <= adder_tree_result;
+     end generate;
 
      intt_out_buf: if use_intt_res_output_buffer generate
           process (i_clk) is
@@ -454,7 +471,7 @@ begin
           extra_latency_brams: for coeff_idx in 0 to i_acc_part'length - 1 generate
                ram_elem: manual_bram
                     generic map (
-                         addr_length         => extra_latency_buffer_cnt(0)'length,
+                         addr_length         => extra_latency_buffer_cnt'length,
                          ram_length          => extra_latency_buffer_length,
                          ram_out_bufs_length => extra_latency_ram_retiming_latency,
                          ram_type            => extra_latency_buffer_ram_type,
@@ -464,8 +481,8 @@ begin
                          i_clk     => i_clk,
                          i_wr_en   => '1',
                          i_wr_data => i_acc_part(coeff_idx),
-                         i_wr_addr => extra_latency_buffer_cnt(extra_latency_buffer_cnt'length - 1),
-                         i_rd_addr => extra_latency_buffer_cnt(extra_latency_buffer_cnt'length - 1),
+                         i_wr_addr => extra_latency_buffer_cnt_buf_chain_end,
+                         i_rd_addr => extra_latency_buffer_cnt_buf_chain_end,
                          o_data    => extra_latency_buffer_end_part(coeff_idx)
                     );
           end generate;
@@ -482,25 +499,25 @@ begin
           process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    if i_reset = '1' then
-                         extra_latency_buffer_cnt(0) <= to_unsigned(0, extra_latency_buffer_cnt(0)'length);
+                    if extra_latency_buffer_cnt = 0 then
+                         extra_latency_buffer_cnt <= to_unsigned(extra_latency_buffer_length - 1, extra_latency_buffer_cnt'length);
                     else
-                         if extra_latency_buffer_cnt(0) < to_unsigned(extra_latency_buffer_length - 1, extra_latency_buffer_cnt(0)'length) then
-                              extra_latency_buffer_cnt(0) <= extra_latency_buffer_cnt(0) + to_unsigned(1, extra_latency_buffer_cnt(0)'length);
-                         else
-                              extra_latency_buffer_cnt(0) <= to_unsigned(0, extra_latency_buffer_cnt(0)'length);
-                         end if;
+                         extra_latency_buffer_cnt <= extra_latency_buffer_cnt - to_unsigned(1, extra_latency_buffer_cnt'length);
                     end if;
                end if;
           end process;
-          
-          cnt_buf: if extra_latency_buffer_cnt'length > 1 generate
-               process (i_clk) is
+          do_extra_latency_buffer_cnt_buf_chain: if extra_latency_buffer_cnt_buf_chain'length > 0 generate
+               process (i_clk)
                begin
                     if rising_edge(i_clk) then
-                         extra_latency_buffer_cnt(1 to extra_latency_buffer_cnt'length-1) <= extra_latency_buffer_cnt(0 to extra_latency_buffer_cnt'length-2);
+                         extra_latency_buffer_cnt_buf_chain(0) <= extra_latency_buffer_cnt;
+                         extra_latency_buffer_cnt_buf_chain(1 to extra_latency_buffer_cnt_buf_chain'length-1) <= extra_latency_buffer_cnt_buf_chain(0 to extra_latency_buffer_cnt_buf_chain'length-2);
                     end if;
                end process;
+               extra_latency_buffer_cnt_buf_chain_end <= extra_latency_buffer_cnt_buf_chain(extra_latency_buffer_cnt_buf_chain'length-1);
+          end generate;
+          no_extra_latency_buffer_cnt_buf_chain: if not (extra_latency_buffer_cnt_buf_chain'length > 0) generate
+               extra_latency_buffer_cnt_buf_chain_end <= extra_latency_buffer_cnt;
           end generate;
      end generate;
 
@@ -508,7 +525,7 @@ begin
      acc_buffer_urams: for coeff_idx in 0 to extra_latency_buffer_end_part'length - 1 generate
           ram_elem: manual_bram
                generic map (
-                    addr_length         => acc_in_buffer_cnt(0)'length,
+                    addr_length         => acc_in_buffer_cnt'length,
                     ram_length          => acc_buffer_length,
                     ram_out_bufs_length => acc_buf_ram_retiming_latency,
                     ram_type            => acc_buffer_ram_type,
@@ -518,8 +535,8 @@ begin
                     i_clk     => i_clk,
                     i_wr_en   => '1',
                     i_wr_data => extra_latency_buffer_end_part(coeff_idx),
-                    i_wr_addr => acc_in_buffer_cnt(acc_in_buffer_cnt'length - 1),
-                    i_rd_addr => acc_in_buffer_cnt(acc_in_buffer_cnt'length - 1),
+                    i_wr_addr => acc_in_buffer_cnt_buf_chain_end,
+                    i_rd_addr => acc_in_buffer_cnt_buf_chain_end,
                     o_data    => acc_old_part(coeff_idx)
                );
      end generate;
@@ -527,26 +544,25 @@ begin
      acc_logic: process (i_clk)
      begin
           if rising_edge(i_clk) then
-               if extra_latency_reset_buffer_end_part = '1' then
-                    acc_in_buffer_cnt(0) <= to_unsigned(0, acc_in_buffer_cnt(0)'length);
+               if acc_in_buffer_cnt = 0 then
+                    acc_in_buffer_cnt <= to_unsigned(acc_buffer_length - 1, acc_in_buffer_cnt'length);
                else
-                    if acc_in_buffer_cnt(0) < to_unsigned(acc_buffer_length - 1, acc_in_buffer_cnt(0)'length) then
-                         acc_in_buffer_cnt(0) <= acc_in_buffer_cnt(0) + to_unsigned(1, acc_in_buffer_cnt(0)'length);
-                    else
-                         acc_in_buffer_cnt(0) <= to_unsigned(0, acc_in_buffer_cnt(0)'length);
-                    end if;
+                    acc_in_buffer_cnt <= acc_in_buffer_cnt - to_unsigned(1, acc_in_buffer_cnt'length);
                end if;
-               acc_in_buffer_cnt(1 to acc_in_buffer_cnt'length - 1) <= acc_in_buffer_cnt(0 to acc_in_buffer_cnt'length - 2);
           end if;
      end process;
-     
-     cnt_buf: if acc_in_buffer_cnt'length > 1 generate
-          process (i_clk) is
+     do_acc_in_buffer_cnt_buf_chain: if acc_in_buffer_cnt_buf_chain 'length > 0 generate
+          process (i_clk)
           begin
                if rising_edge(i_clk) then
-                    acc_in_buffer_cnt(1 to acc_in_buffer_cnt'length-1) <= acc_in_buffer_cnt(0 to acc_in_buffer_cnt'length-2);
+                    acc_in_buffer_cnt_buf_chain(0) <= acc_in_buffer_cnt;
+                    acc_in_buffer_cnt_buf_chain(1 to acc_in_buffer_cnt_buf_chain'length - 1) <= acc_in_buffer_cnt_buf_chain(0 to acc_in_buffer_cnt_buf_chain'length - 2);
                end if;
           end process;
+          acc_in_buffer_cnt_buf_chain_end <= acc_in_buffer_cnt_buf_chain(acc_in_buffer_cnt_buf_chain'length-1);
+     end generate;
+     no_acc_in_buffer_cnt_buf_chain: if not (acc_in_buffer_cnt_buf_chain'length > 0) generate
+          acc_in_buffer_cnt_buf_chain_end <= acc_in_buffer_cnt;
      end generate;
 
 end architecture;

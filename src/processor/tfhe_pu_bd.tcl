@@ -334,7 +334,7 @@ proc create_root_design { parentCell } {
   # Create instance: smartconnect_1, and set properties
   set smartconnect_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_1 ]
   set_property -dict [list \
-    CONFIG.NUM_MI {16} \
+    CONFIG.NUM_MI {8} \
     CONFIG.NUM_SI {1} \
   ] $smartconnect_1
 
@@ -364,14 +364,6 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net smartconnect_1_M05_AXI [get_bd_intf_pins smartconnect_1/M05_AXI] [get_bd_intf_pins tfhe_block_0/AXI_05]
   connect_bd_intf_net -intf_net smartconnect_1_M06_AXI [get_bd_intf_pins smartconnect_1/M06_AXI] [get_bd_intf_pins tfhe_block_0/AXI_06]
   connect_bd_intf_net -intf_net smartconnect_1_M07_AXI [get_bd_intf_pins smartconnect_1/M07_AXI] [get_bd_intf_pins tfhe_block_0/AXI_07]
-  connect_bd_intf_net -intf_net smartconnect_1_M08_AXI [get_bd_intf_pins smartconnect_1/M08_AXI] [get_bd_intf_pins tfhe_block_0/AXI_08]
-  connect_bd_intf_net -intf_net smartconnect_1_M09_AXI [get_bd_intf_pins smartconnect_1/M09_AXI] [get_bd_intf_pins tfhe_block_0/AXI_09]
-  connect_bd_intf_net -intf_net smartconnect_1_M10_AXI [get_bd_intf_pins smartconnect_1/M10_AXI] [get_bd_intf_pins tfhe_block_0/AXI_10]
-  connect_bd_intf_net -intf_net smartconnect_1_M11_AXI [get_bd_intf_pins smartconnect_1/M11_AXI] [get_bd_intf_pins tfhe_block_0/AXI_11]
-  connect_bd_intf_net -intf_net smartconnect_1_M12_AXI [get_bd_intf_pins smartconnect_1/M12_AXI] [get_bd_intf_pins tfhe_block_0/AXI_12]
-  connect_bd_intf_net -intf_net smartconnect_1_M13_AXI [get_bd_intf_pins smartconnect_1/M13_AXI] [get_bd_intf_pins tfhe_block_0/AXI_13]
-  connect_bd_intf_net -intf_net smartconnect_1_M14_AXI [get_bd_intf_pins smartconnect_1/M14_AXI] [get_bd_intf_pins tfhe_block_0/AXI_14]
-  connect_bd_intf_net -intf_net smartconnect_1_M15_AXI [get_bd_intf_pins smartconnect_1/M15_AXI] [get_bd_intf_pins tfhe_block_0/AXI_15]
   connect_bd_intf_net -intf_net xdma_0_M_AXI [get_bd_intf_pins smartconnect_0/S00_AXI] [get_bd_intf_pins xdma_0/M_AXI]
   connect_bd_intf_net -intf_net xdma_0_M_AXI_LITE [get_bd_intf_pins tfhe_block_0/s00_axi] [get_bd_intf_pins xdma_0/M_AXI_LITE]
   connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pci_express_x8] [get_bd_intf_pins xdma_0/pcie_mgt]
@@ -406,14 +398,6 @@ proc create_root_design { parentCell } {
   [get_bd_pins tfhe_block_0/AXI_05_ACLK] \
   [get_bd_pins tfhe_block_0/AXI_06_ACLK] \
   [get_bd_pins tfhe_block_0/AXI_07_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_08_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_09_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_10_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_11_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_12_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_13_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_14_ACLK] \
-  [get_bd_pins tfhe_block_0/AXI_15_ACLK] \
   [get_bd_pins tfhe_block_0/AXI_16_ACLK] \
   [get_bd_pins tfhe_block_0/AXI_17_ACLK] \
   [get_bd_pins tfhe_block_0/AXI_18_ACLK] \
@@ -437,14 +421,6 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x50000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_7 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_05/reg0] -force
   assign_bd_address -offset 0x60000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_8 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_06/reg0] -force
   assign_bd_address -offset 0x70000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_9 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_07/reg0] -force
-  assign_bd_address -offset 0x80000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_10 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_08/reg0] -force
-  assign_bd_address -offset 0x90000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_11 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_09/reg0] -force
-  assign_bd_address -offset 0xA0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_12 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_10/reg0] -force
-  assign_bd_address -offset 0xB0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_13 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_11/reg0] -force
-  assign_bd_address -offset 0xC0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_14 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_12/reg0] -force
-  assign_bd_address -offset 0xD0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_15 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_13/reg0] -force
-  assign_bd_address -offset 0xE0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_16 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_14/reg0] -force
-  assign_bd_address -offset 0xF0000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_17 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_15/reg0] -force
   assign_bd_address -offset 0x000100000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_18 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_16/reg0] -force
   assign_bd_address -offset 0x000110000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_19 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_17/reg0] -force
   assign_bd_address -offset 0x000120000000 -range 0x10000000 -with_name SEG_tfhe_block_0_reg0_20 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs tfhe_block_0/AXI_18/reg0] -force
@@ -476,6 +452,8 @@ CONFIG.USER_MC0_TRAFFIC_OPTION {Linear} \
 CONFIG.USER_SWITCH_ENABLE_00 {FALSE} \
 CONFIG.USER_XSDB_INTF_EN {FALSE} \
 ] [get_ips hbm_0]
+#set_property GENERATE_SYNTH_CHECKPOINT false [get_ips hbm_0]
+#generate_target all [get_ips hbm_0]
 
 # add and configure the right hbm stack
 create_ip -name hbm -vendor xilinx.com -library ip -version 1.0 -module_name hbm_1
@@ -488,11 +466,15 @@ CONFIG.USER_SINGLE_STACK_SELECTION {RIGHT} \
 CONFIG.USER_SWITCH_ENABLE_00 {FALSE} \
 CONFIG.USER_XSDB_INTF_EN {FALSE} \
 ] [get_ips hbm_1]
+#set_property GENERATE_SYNTH_CHECKPOINT false [get_ips hbm_1]
+#generate_target all [get_ips hbm_1]
 
 create_root_design ""
+
 
 # set tfhe_pu_top as top module
 set_property top tfhe_pu_top [current_fileset]
 
 # refresh block design
 update_module_reference tfhe_pu_bd_tfhe_block_0_0
+ 

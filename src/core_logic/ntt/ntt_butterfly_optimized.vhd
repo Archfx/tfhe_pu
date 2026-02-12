@@ -143,10 +143,10 @@ begin
                process (i_clk)
                begin
                     if rising_edge(i_clk) then
-                         if wait_regs_cnt < to_unsigned(wait_regs'length - 1, wait_regs_cnt'length) then
-                              wait_regs_cnt <= wait_regs_cnt + to_unsigned(1, wait_regs_cnt'length);
+                         if wait_regs_cnt = 0 then
+                              wait_regs_cnt <= to_unsigned(wait_regs'length - 1, wait_regs_cnt'length);
                          else
-                              wait_regs_cnt <= to_unsigned(0, wait_regs_cnt'length);
+                              wait_regs_cnt <= wait_regs_cnt - to_unsigned(1, wait_regs_cnt'length);
                          end if;
                          wait_regs(to_integer(wait_regs_cnt)) <= wait_regs_input;
                          wait_regs_output <= wait_regs(to_integer(wait_regs_cnt));
